@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Замены</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="js/theme.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Меню -->
+        <div class="nav-menu">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Расписание</a>
+                </li>
+                <li class="nav-item">
+                    <a href="replacements.html" class="nav-link selected">Замены</a>
+                </li>
+                <li class="nav-item">
+                    <a href="diary.html" class="nav-link">Дневник</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Содержимое -->
+        <div class="content-about">
+            <div class="page-title">Замены</div>
+
+            <div class="schedule-meta">
+                <span class="meta-date meta-date-white" id="replacements-date">—</span>
+            </div>
+
+            <!-- Реальные данные с mpt.ru/izmeneniya-v-raspisanii/: группы П-5-25 нет — замен нет -->
+            <div class="no-replacements">
+                <div class="nr-title">Замен нет</div>
+                <div class="nr-sub">Для группы П-5-25 на эту дату замены не найдены</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            function fmtDate(d) {
+                var months = [
+                    "января", "февраля", "марта", "апреля", "мая", "июня",
+                    "июля", "августа", "сентября", "октября", "ноября", "декабря"
+                ];
+                var weekdays = [
+                    "Воскресенье", "Понедельник", "Вторник", "Среда",
+                    "Четверг", "Пятница", "Суббота"
+                ];
+                return weekdays[d.getDay()] + ", " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+            }
+            var el = document.getElementById("replacements-date");
+            if (el) el.textContent = fmtDate(new Date());
+        })();
+    </script>
+</body>
+</html>

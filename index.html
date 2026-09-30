@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Расписание</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="js/theme.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Меню -->
+        <div class="nav-menu">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link selected">Расписание</a>
+                </li>
+                <li class="nav-item">
+                    <a href="replacements.html" class="nav-link">Замены</a>
+                </li>
+                <li class="nav-item">
+                    <a href="diary.html" class="nav-link">Дневник</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Содержимое -->
+        <div class="content-about">
+            <div class="page-title" id="class-title"></div>
+
+            <!-- Дата и легенда недель -->
+            <div class="schedule-meta">
+                <span class="meta-date" id="schedule-date">—</span>
+                <span class="legend">
+                    <span class="legend-item"><span class="legend-chip w1"></span>Числитель</span>
+                    <span class="legend-item"><span class="legend-chip w2"></span>Знаменатель</span>
+                </span>
+            </div>
+
+            <!-- Карточки дней (заполняются скриптом) -->
+            <div class="days-grid" id="days-grid"></div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/schedule.js"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Дневник</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <script src="js/theme.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Меню -->
+        <div class="nav-menu">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link">Расписание</a>
+                </li>
+                <li class="nav-item">
+                    <a href="replacements.html" class="nav-link">Замены</a>
+                </li>
+                <li class="nav-item">
+                    <a href="diary.html" class="nav-link selected">Дневник</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Содержимое -->
+        <div class="content-about">
+            <div class="page-title">Дневник</div>
+
+            <!-- Управление периодами -->
+            <div class="diary-meta" id="diary-meta">
+                <div class="view-mode" id="view-mode">
+                    <button type="button" class="mode-btn selected" data-mode="week">Неделя</button>
+                    <button type="button" class="mode-btn" data-mode="month">Месяц</button>
+                    <button type="button" class="mode-btn" data-mode="year">Год</button>
+                </div>
+                <button type="button" class="week-btn arrow" id="diary-prev" title="Назад">←</button>
+                <div class="diary-week-label">
+                    <span class="diary-week-title">
+                        <span class="parity-chip w2" id="diary-parity">Знаменатель</span>
+                        <span id="diary-week-no">Неделя</span>
+                    </span>
+                    <span class="diary-week-range" id="diary-week-range">—</span>
+                </div>
+                <button type="button" class="week-btn arrow" id="diary-next" title="Вперёд">→</button>
+                <button type="button" class="week-btn" id="diary-today">Сегодня</button>
+                <input type="date" id="diary-picker">
+                <button type="button" class="week-btn reset" id="diary-reset">Сбросить отметки</button>
+                <span class="meta-stats">
+                    <span class="stat-chip" title="Пропущено пар">
+                        <span class="stat-ico nh">н</span>
+                        <span class="stat-val" id="stat-absent">0</span>
+                    </span>
+                    <span class="stat-chip" title="По болезни">
+                        <span class="stat-ico nb">б</span>
+                        <span class="stat-val" id="stat-ill">0</span>
+                    </span>
+                </span>
+            </div>
+
+            <!-- Неделя -->
+            <div class="table-card diary-table-card" id="diary-week-card">
+                <div class="table-scroll">
+                    <table class="styled-table diary-table" id="diary-table"></table>
+                </div>
+            </div>
+
+            <!-- Месяц -->
+            <div class="table-card diary-table-card hidden" id="diary-month-card">
+                <div class="table-scroll">
+                    <table class="styled-table ms-table" id="diary-month-table"></table>
+                </div>
+            </div>
+
+            <!-- Год -->
+            <div class="table-card diary-year-card hidden" id="diary-year-card">
+                <div class="sem-nav">
+                    <button type="button" class="sem-btn arrow" id="sem-prev" title="Предыдущий семестр">←</button>
+                    <span class="sem-label" id="sem-label">1 семестр</span>
+                    <button type="button" class="sem-btn arrow" id="sem-next" title="Следующий семестр">→</button>
+                </div>
+                <div class="table-scroll">
+                    <table class="styled-table ms-table" id="diary-year-table"></table>
+                </div>
+            </div>
+
+            <!-- Летние каникулы -->
+            <div class="table-card diary-summer-card hidden" id="diary-summer">
+                <div class="diary-summer-text">Летние каникулы</div>
+                <div class="diary-summer-note">Каникулы</div>
+            </div>
+
+            <div class="diary-hint">Нажмите на клетку с оценкой, чтобы поставить или изменить её.</div>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/diary.js"></script>
+</body>
+</html>

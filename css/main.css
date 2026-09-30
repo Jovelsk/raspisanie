@@ -1,0 +1,1705 @@
+/* ———————————————————————————————————
+   Светлая тема: белый / чёрный / зелёный
+   Палитра вдохновлена изображением:
+   #202020, #606060, #607060, #506050
+   ——————————————————————————————————— */
+
+:root {
+    --accent: #3f5d40;          /* Основной цвет оформления (зелёный) */
+    --text: #202020;            /* Почти чёрный */
+    --text-on-accent: #f2f6f1;
+
+    /* Поверхности и линии — в тон акцента (белый остаётся белым) */
+    --bg: color-mix(in srgb, var(--accent) 7%, #ffffff);
+    --container-bg: #ffffff;
+    --panel-bg: color-mix(in srgb, var(--accent) 8%, #ffffff);
+    --nav-bg: color-mix(in srgb, var(--accent) 7%, #ffffff);
+    --nav-hover: color-mix(in srgb, var(--accent) 13%, #ffffff);
+    --nav-border: color-mix(in srgb, var(--accent) 25%, #ffffff);
+    --border: color-mix(in srgb, var(--accent) 16%, #ffffff);
+    --stripe: color-mix(in srgb, var(--accent) 7%, #ffffff);
+    --text-muted: color-mix(in srgb, var(--text) 62%, var(--bg));
+
+    /* Производные от акцента — подстраиваются под тему и цвет */
+    --today-bg: color-mix(in srgb, var(--accent) 10%, var(--container-bg));
+    --accent-soft: color-mix(in srgb, var(--accent) 62%, var(--bg));
+    --accent-light: color-mix(in srgb, var(--accent) 16%, var(--container-bg));
+    --accent-border: color-mix(in srgb, var(--accent) 55%, var(--container-bg));
+    --w1-bg: #cfe6cd;
+    --w1-border: #8fb48d;
+    --w1-text: #2e4a30;
+    --w2-bg: #a8bda3;
+    --w2-border: #6f8f6c;
+    --w2-text: #22381f;
+}
+
+/* ———————————————————————————————————
+   Тёмная тема (включается через data-theme="dark" на <html>)
+   Сохраняется в localStorage и не сбрасывается автоматически
+   ——————————————————————————————————— */
+
+/* Идёт ДО цветовых блоков: цвет оформления переопределяет акцент в обеих темах */
+[data-theme="dark"] {
+    --accent: #5f8f63;
+    --text: #e3e8e1;
+    --text-on-accent: #f2f6f1;
+
+    /* Поверхности — тёмные, в тон акцента */
+    --bg: color-mix(in srgb, var(--accent) 9%, #060807);
+    --container-bg: color-mix(in srgb, var(--accent) 6%, #0e100e);
+    --panel-bg: color-mix(in srgb, var(--accent) 6%, #0b0d0b);
+    --nav-bg: color-mix(in srgb, var(--accent) 7%, #0c0e0c);
+    --nav-hover: color-mix(in srgb, var(--accent) 16%, #0b0d0b);
+    --nav-border: color-mix(in srgb, var(--accent) 28%, #0b0d0b);
+    --border: color-mix(in srgb, var(--accent) 19%, #0b0d0b);
+    --stripe: color-mix(in srgb, var(--accent) 11%, #0b0d0b);
+
+    --w1-bg: #2c4630;
+    --w1-border: #4c6b50;
+    --w1-text: #c9e2c5;
+    --w2-bg: #283528;
+    --w2-border: #52694f;
+    --w2-text: #c3cebb;
+}
+
+/* ———————————————————————————————————
+   Цвета оформления: акцент + свой числитель/знаменатель
+   (светлая тема)
+   ——————————————————————————————————— */
+[data-color="blue"] {
+    --accent: #3a6ea5;
+    --w1-bg: #d5e4f3;
+    --w1-border: #96b8d9;
+    --w1-text: #2b4a6b;
+    --w2-bg: #a9c2da;
+    --w2-border: #6f8fae;
+    --w2-text: #213a51;
+}
+[data-color="red"] {
+    --accent: #b5433f;
+    --w1-bg: #f3ddd9;
+    --w1-border: #d8a09a;
+    --w1-text: #7a2f2a;
+    --w2-bg: #d8b0aa;
+    --w2-border: #b57f78;
+    --w2-text: #5e2622;
+}
+[data-color="orange"] {
+    --accent: #b0682a;
+    --w1-bg: #f4dfc4;
+    --w1-border: #ddaf7e;
+    --w1-text: #7a481c;
+    --w2-bg: #dcb98c;
+    --w2-border: #bd8f5c;
+    --w2-text: #5f3a17;
+}
+[data-color="purple"] {
+    --accent: #7a5ca8;
+    --w1-bg: #e6ddf2;
+    --w1-border: #b9a3d6;
+    --w1-text: #4a3a6b;
+    --w2-bg: #c6b3dc;
+    --w2-border: #987fc1;
+    --w2-text: #3a2d52;
+}
+[data-color="teal"] {
+    --accent: #2e8b80;
+    --w1-bg: #cde8e3;
+    --w1-border: #83bfb6;
+    --w1-text: #1f5e57;
+    --w2-bg: #a5c9c0;
+    --w2-border: #6ba094;
+    --w2-text: #1a4a44;
+}
+[data-color="pink"] {
+    --accent: #c05a84;
+    --w1-bg: #f3dde6;
+    --w1-border: #dc9cb8;
+    --w1-text: #8a3357;
+    --w2-bg: #d2a3ba;
+    --w2-border: #b07290;
+    --w2-text: #6a2b45;
+}
+
+/* ———————————————————————————————————
+   Цвета оформления в тёмной теме
+   ——————————————————————————————————— */
+[data-theme="dark"][data-color="blue"] {
+    --accent: #5a9dd8;
+    --w1-bg: #3b6190;
+    --w1-border: #5d8ab3;
+    --w1-text: #c4ddf2;
+    --w2-bg: #283f56;
+    --w2-border: #46648a;
+    --w2-text: #b5d0e6;
+}
+[data-theme="dark"][data-color="red"] {
+    --accent: #e07068;
+    --w1-bg: #7a4741;
+    --w1-border: #a06a62;
+    --w1-text: #f0c8c2;
+    --w2-bg: #472a27;
+    --w2-border: #6f403b;
+    --w2-text: #e8b7b0;
+}
+[data-theme="dark"][data-color="orange"] {
+    --accent: #e08a4a;
+    --w1-bg: #7d5c35;
+    --w1-border: #a8814f;
+    --w1-text: #f2d9bb;
+    --w2-bg: #4c3823;
+    --w2-border: #715534;
+    --w2-text: #e8c9a4;
+}
+[data-theme="dark"][data-color="purple"] {
+    --accent: #9a7ccb;
+    --w1-bg: #624f87;
+    --w1-border: #8674a8;
+    --w1-text: #dccfee;
+    --w2-bg: #382e4b;
+    --w2-border: #574a75;
+    --w2-text: #cabce0;
+}
+[data-theme="dark"][data-color="teal"] {
+    --accent: #4fb5a8;
+    --w1-bg: #3a6f68;
+    --w1-border: #569088;
+    --w1-text: #c2e2dc;
+    --w2-bg: #203f3b;
+    --w2-border: #35625c;
+    --w2-text: #b4d6d0;
+}
+[data-theme="dark"][data-color="pink"] {
+    --accent: #e07f9f;
+    --w1-bg: #7b4a5f;
+    --w1-border: #a16d80;
+    --w1-text: #f0c8d6;
+    --w2-bg: #492d3b;
+    --w2-border: #6f4355;
+    --w2-text: #e4b3c6;
+}
+
+/* Свой цвет из палитры: числитель/знаменатель считаются из акцента */
+[data-color="custom"] {
+    --w1-bg: color-mix(in srgb, var(--accent) 24%, #ffffff);
+    --w1-border: color-mix(in srgb, var(--accent) 50%, #ffffff);
+    --w1-text: color-mix(in srgb, var(--accent) 80%, var(--text));
+    --w2-bg: color-mix(in srgb, var(--accent) 42%, #ffffff);
+    --w2-border: color-mix(in srgb, var(--accent) 55%, #ffffff);
+    --w2-text: color-mix(in srgb, var(--accent) 80%, var(--text));
+}
+[data-theme="dark"][data-color="custom"] {
+    --w1-bg: color-mix(in srgb, var(--accent) 30%, #0a0c09);
+    --w1-border: color-mix(in srgb, var(--accent) 45%, #0a0c09);
+    --w1-text: color-mix(in srgb, var(--accent) 55%, #ffffff);
+    --w2-bg: color-mix(in srgb, var(--accent) 16%, #060807);
+    --w2-border: color-mix(in srgb, var(--accent) 35%, #060807);
+    --w2-text: color-mix(in srgb, var(--accent) 60%, #ffffff);
+}
+
+[data-theme="dark"] .table-card,
+[data-theme="dark"] .day-card,
+[data-theme="dark"] .no-replacements {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .grade-pop,
+[data-theme="dark"] .settings-box {
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
+}
+
+/* В дневнике строки по умолчанию белые — в тёмной теме берут фон контейнера */
+[data-theme="dark"] .diary-table tbody tr,
+[data-theme="dark"] .diary-table tbody tr:nth-child(even) {
+    background: var(--container-bg);
+}
+
+[data-theme="dark"] .c-overlay {
+    background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] #diary-picker {
+    color-scheme: dark;
+}
+
+/* Подсветка «сегодня» в тёмной теме — спокойнее */
+[data-theme="dark"] .day-card.today {
+    box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Обнуление, базовые стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg);
+    display: flex;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text);
+}
+
+/* Основной контейнер — во весь экран, колонка: меню сверху, контент под ним */
+.container {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--container-bg);
+}
+
+/* Меню */
+.nav-menu {
+    flex: none;
+    background-color: var(--nav-bg);
+}
+
+.nav-list {
+    display: flex;
+    list-style: none; /* Убирает точки от списка */
+    width: 100%;
+    justify-content: center; /* центрирует как группу, но пункты растягиваются через flex:1 */
+}
+
+.nav-item {
+    flex: 1; /* заставляет равномерно растягиваться на всю ширину контейнера */
+    text-align: center;
+}
+
+/* Ссылки */
+.nav-link {
+    display: block;
+    padding: 5px 8px;
+    font-size: 18px;
+    font-weight: 550; /* Жирность */
+    text-decoration: none; /* Убирает полоску от ссылки */
+    color: var(--text);
+    background-color: transparent; /* Прозрачный фон */
+    font-family: 'Segoe UI', sans-serif;
+    border-bottom: 2px solid var(--nav-border);
+}
+
+/* Пупупу */
+.nav-link:not(.selected):hover {
+    background-color: var(--nav-hover);
+    color: var(--accent);
+}
+
+/* Выбранная ссылка */
+.nav-list .selected {
+    background-color: var(--accent);
+    color: var(--text-on-accent);
+    border-bottom-color: var(--accent);
+}
+
+/* Содержимое */
+.content-about {
+    display: flex;
+    flex-direction: column;
+    gap: 28px; /* Отступы */
+    flex: 1; /* Одинаковая высота окна на всех страницах */
+    min-height: 0;
+    overflow-y: auto;
+    padding: 40px 58px 60px 58px;
+    background: var(--panel-bg);
+}
+
+.page-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Карточка с таблицей */
+.table-card {
+    background: var(--container-bg);
+    border-radius: 15px;
+    box-shadow: 0 6px 14px rgba(32, 32, 32, 0.08);
+    overflow: hidden;
+    border: 1px solid var(--border);
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.diary-table-card {
+    overflow-x: auto;
+}
+
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+}
+
+.styled-table th {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+    padding: 12px 14px;
+    text-align: center;
+}
+
+.styled-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+}
+
+.styled-table tbody tr:nth-child(even) {
+    background-color: var(--stripe);
+}
+
+.styled-table .day-row {
+    background: var(--accent-light);
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    border-bottom: 2px solid var(--accent-border);
+}
+
+.styled-table .grade {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* Сетка карточек дней */
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    align-items: stretch;
+}
+
+.day-card {
+    background: var(--container-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 6px 14px rgba(32, 32, 32, 0.08);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.day-card.today {
+    border: 2px solid var(--accent);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 50%, transparent);
+    background: var(--today-bg);
+}
+
+.day-card-head {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+    font-size: 14px;
+    text-align: center;
+    padding: 10px 8px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.day-card-head .building {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--accent) 40%, var(--text-on-accent));
+    margin-top: 2px;
+}
+
+.day-card-body {
+    display: grid;
+    grid-template-rows: repeat(5, 1fr);
+    flex: 1;
+    min-height: 0;
+}
+
+.day-row {
+    display: grid;
+    grid-template-columns: 62px 1fr;
+    gap: 6px;
+    align-items: center;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 0;
+}
+
+.day-row:last-child {
+    border-bottom: none;
+}
+
+.pair-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.pair-cell .pair-num {
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.pair-cell .pair-time {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+.week-cells {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wcell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: stretch;
+    gap: 2px;
+    padding: 4px 8px;
+    min-height: 30px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.wcell .subj {
+    display: block;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.wcell .teacher {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.wcell.w1 {
+    background: var(--w1-bg) !important;
+    color: var(--w1-text) !important;
+}
+
+.wcell.w2 {
+    background: var(--w2-bg) !important;
+    color: var(--w2-text) !important;
+}
+
+.wcell-plain {
+    border: none;
+    background: none;
+    color: var(--text);
+    padding: 0;
+}
+
+.wcell-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 30px;
+}
+
+/* Выходной день */
+.day-off-card {
+    border-style: dashed;
+}
+
+.day-off-card .day-card-head {
+    background: var(--text-muted);
+}
+
+.day-card-empty {
+    text-align: center;
+    padding: 30px 10px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-muted);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 1200px) {
+    .days-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 700px) {
+    .days-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Дата и текущая неделя */
+.schedule-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.schedule-meta span {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 20px;
+    line-height: 22px;
+    box-sizing: border-box;
+}
+
+.meta-date {
+    color: var(--text);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 42px;
+}
+
+.meta-date-white {
+    font-weight: 600;
+}
+
+/* Легенда недель */
+.schedule-meta .legend {
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 20px;
+    padding: 8px 18px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    height: 42px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.legend-chip {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+/* Цвета недель */
+.w1 {
+    background: var(--w1-bg) !important;
+    border-color: var(--w1-border) !important;
+    color: var(--w1-text) !important;
+}
+
+.w2 {
+    background: var(--w2-bg) !important;
+    border-color: var(--w2-border) !important;
+    color: var(--w2-text) !important;
+}
+
+/* Замены: нет замен */
+.no-replacements {
+    background: var(--container-bg);
+    border: 1px dashed var(--accent-border);
+    border-radius: 15px;
+    box-shadow: 0 6px 14px rgba(32, 32, 32, 0.08);
+    padding: 44px 20px;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.no-replacements .nr-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.no-replacements .nr-sub {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ———————————————————————————————————
+   Дневник
+   ——————————————————————————————————— */
+
+/* Дата, переключатель недели, сброс */
+.diary-meta {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.diary-meta .week-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 18px;
+    border: 1px solid var(--nav-border);
+    border-radius: 20px;
+    background: var(--container-bg);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    line-height: 22px;
+}
+
+.diary-meta .week-btn:hover {
+    background: var(--nav-hover);
+    color: var(--accent);
+}
+
+.diary-meta .week-btn.arrow {
+    padding: 0 16px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.diary-meta .week-btn.reset {
+    border-style: dashed;
+    color: var(--text-muted);
+}
+
+.diary-meta .week-btn.reset:hover {
+    color: var(--text);
+}
+
+/* Чипы итогов: пропуски и болезни */
+.meta-stats {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.stat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 12px 0 8px;
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 17px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.stat-chip .stat-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.stat-chip .stat-ico.nh {
+    background: #9aa2ab;
+}
+
+.stat-chip .stat-ico.nb {
+    background: #6fb3d9;
+}
+
+.stat-chip .stat-val {
+    font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+    .meta-stats {
+        position: static;
+        left: auto;
+        transform: none;
+        order: -1;
+        flex-basis: 100%;
+        justify-content: center;
+    }
+}
+
+#diary-picker {
+    padding: 8px 10px;
+    border: 1px solid var(--nav-border);
+    border-radius: 20px;
+    background: var(--container-bg);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+}
+
+#diary-picker::-webkit-inner-spin-button {
+    display: none;
+    -webkit-appearance: none;
+}
+
+#diary-picker:hover {
+    border-color: var(--accent-border);
+}
+
+/* Блок с номером недели, чётностью и датами */
+.diary-week-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 210px;
+    height: 42px;
+}
+
+.diary-week-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+}
+
+.parity-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    background: var(--w2-bg);
+    color: var(--w2-text);
+}
+
+.diary-week-range {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    line-height: 1;
+}
+
+.diary-table {
+    min-width: 940px;
+    table-layout: auto;
+}
+
+.diary-table th,
+.diary-table td {
+    border-right: 1px solid var(--border);
+}
+
+.diary-table th:last-child,
+.diary-table td:last-child {
+    border-right: none;
+}
+
+/* Столбец номеров пар */
+.diary-table .pair-th {
+    width: 78px;
+    background: var(--panel-bg);
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.diary-table thead .pair-th {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.diary-table tbody .pair-th .pair-num {
+    display: block;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.diary-table tbody .pair-th .pair-time {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+/* Заголовки дней */
+.diary-table .day-th {
+    padding: 8px 6px;
+    line-height: 1.2;
+}
+
+.diary-table .day-th .day-name {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.diary-table .day-th .day-date {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 24px;
+    margin-top: 3px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-on-accent);
+    opacity: 0.85;
+}
+
+/* Неделя: всё белое, кроме «сегодня» и чередующихся по чётности недель */
+.diary-table tbody tr {
+    background: #ffffff;
+}
+
+.diary-table tbody tr:nth-child(even) {
+    background: #ffffff;
+}
+
+.diary-table .d-cell.today {
+    background: var(--today-bg);
+    border-left: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+}
+
+.diary-table tbody tr:first-child .d-cell.today {
+    border-top: 2px solid var(--accent);
+}
+
+.diary-table tbody tr:last-child .d-cell.today {
+    border-bottom: 2px solid var(--accent);
+}
+
+.diary-table .d-cell.w1 {
+    background: var(--w1-bg);
+}
+
+.diary-table .d-cell.w2 {
+    background: var(--w2-bg);
+}
+
+.diary-table .d-off {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.d-subj {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.25;
+    min-height: 32px;
+}
+
+.d-teacher {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 3px 0 8px;
+    line-height: 1.2;
+    min-height: 13px;
+}
+
+.d-none {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.d-none.w1 {
+    background: var(--w1-bg);
+}
+
+.d-none.w2 {
+    background: var(--w2-bg);
+    color: var(--w2-text);
+}
+
+/* Рамка «сегодня» всегда акцентная, даже там, где ячейка чётности недели */
+.diary-table .d-cell.today.w1,
+.diary-table .d-cell.today.w2,
+.diary-table .d-none.today.w1,
+.diary-table .d-none.today.w2 {
+    border-left-color: var(--accent) !important;
+    border-right-color: var(--accent) !important;
+}
+
+/* Клетка отметки (как в Дневник.ру) */
+.d-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 5px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 0;
+    vertical-align: middle;
+    transition: transform 0.1s ease;
+}
+
+.d-mark:hover {
+    transform: scale(1.18);
+}
+
+.d-mark.g5 {
+    background: #46a84a;
+}
+
+.d-mark.g4 {
+    background: #8fbf4a;
+}
+
+.d-mark.g3 {
+    background: #f2b03c;
+}
+
+.d-mark.g2 {
+    background: #e04e4e;
+}
+
+.d-mark.gn {
+    background: #9aa2ab;
+}
+
+.d-mark.gb {
+    background: #6fb3d9;
+}
+
+.d-mark.empty {
+    background: transparent;
+    color: color-mix(in srgb, var(--text-muted) 70%, var(--accent));
+    border: 1px dashed color-mix(in srgb, var(--text-muted) 50%, var(--accent));
+}
+
+/* Плавающий выбор оценки */
+.grade-pop {
+    position: fixed;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(32, 32, 32, 0.2);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.grade-pop.hidden {
+    display: none;
+}
+
+.grade-pop.ytip {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    font: inherit;
+    color: var(--text);
+    box-shadow: none;
+    border: 1px solid var(--nav-border);
+    background: var(--container-bg);
+}
+
+.grade-pop.ytip:hover {
+    background: var(--accent-light);
+}
+
+.grade-pop.ytip::after {
+    content: none;
+}
+
+/* Окно подтверждения (замена window.confirm) */
+.c-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(32, 32, 32, 0.35);
+}
+
+.c-box {
+    min-width: 300px;
+    max-width: 420px;
+    margin: 16px;
+    padding: 18px 20px;
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(32, 32, 32, 0.28);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.c-msg {
+    margin: 0 0 16px;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.c-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.c-btns button {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.c-btns .c-ok {
+    background: var(--accent);
+    color: var(--text-on-accent);
+}
+
+.c-btns .c-ok:hover {
+    filter: brightness(1.08);
+}
+
+.c-btns .c-no {
+    background: var(--panel-bg);
+    color: var(--text);
+    border: 1px solid var(--nav-border);
+}
+
+.c-btns .c-no:hover {
+    background: var(--accent-light);
+}
+
+.grade-pop .grade-opt {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.grade-pop .grade-opt[data-grade="5"] {
+    background: #46a84a;
+}
+
+.grade-pop .grade-opt[data-grade="4"] {
+    background: #8fbf4a;
+}
+
+.grade-pop .grade-opt[data-grade="3"] {
+    background: #f2b03c;
+}
+
+.grade-pop .grade-opt[data-grade="2"] {
+    background: #e04e4e;
+}
+
+.grade-pop .grade-opt[data-grade="н"] {
+    background: #9aa2ab;
+}
+
+.grade-pop .grade-opt[data-grade="б"] {
+    background: #6fb3d9;
+}
+
+.grade-pop .grade-opt:hover {
+    filter: brightness(0.9);
+}
+
+.grade-pop .grade-clear {
+    background: transparent;
+    border: 1px dashed var(--nav-border);
+    color: var(--text-muted);
+}
+
+.grade-pop .grade-clear:hover {
+    filter: none;
+    background: var(--panel-bg);
+    color: var(--text);
+}
+
+/* Переключатель режима отображения */
+.view-mode {
+    display: inline-flex;
+    height: 42px;
+    border: 1px solid var(--nav-border);
+    border-radius: 21px;
+    padding: 3px;
+    background: var(--container-bg);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.view-mode .mode-btn {
+    border: none;
+    background: transparent;
+    border-radius: 18px;
+    padding: 0 16px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.view-mode .mode-btn:hover {
+    color: var(--accent);
+}
+
+.view-mode .mode-btn.selected {
+    background: var(--accent);
+    color: var(--text-on-accent);
+}
+
+/* Центрированный переключатель семестров над таблицей года */
+.sem-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    background: var(--accent);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.sem-nav .sem-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 13px;
+    background: transparent;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text-on-accent);
+    cursor: pointer;
+}
+
+.sem-nav .sem-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.sem-nav .sem-label {
+    min-width: 110px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    padding-top: 2px;
+    color: var(--text-on-accent);
+}
+
+/* Матрица месяца: предметы × даты */
+.ms-table {
+    border-collapse: collapse;
+}
+
+.ms-table .ms-num-th,
+.ms-table .ms-num {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    width: 44px;
+    min-width: 44px;
+    text-align: center;
+    background: var(--nav-bg);
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 8px 4px;
+    border: 1px solid var(--border);
+}
+
+.ms-table .ms-subj-th {
+    position: sticky;
+    left: 44px;
+    z-index: 2;
+    background: var(--nav-bg);
+    color: var(--text);
+    font-weight: 700;
+    text-align: left;
+    min-width: 200px;
+    max-width: 240px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+}
+
+.ms-table .ms-day-th {
+    min-width: 46px;
+    padding: 6px 4px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+}
+
+.ms-table .ms-day-th:hover {
+    background: var(--accent-light);
+}
+
+.ms-table .ms-day-num {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.ms-table .ms-day-wd {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.ms-table .ms-cell {
+    min-width: 46px;
+    text-align: center;
+    padding: 6px 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.ms-table .ms-cell:hover {
+    background: var(--accent-light);
+}
+
+.ms-table .ms-cell.today {
+    background: var(--today-bg);
+    border-left: 2px solid var(--accent);
+    border-right: 2px solid var(--accent);
+}
+
+.ms-table tbody tr:first-child .ms-cell.today {
+    border-top: 2px solid var(--accent);
+}
+
+.ms-table tbody tr:last-child .ms-cell.today {
+    border-bottom: 2px solid var(--accent);
+}
+
+.ms-table .ms-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+}
+
+/* В годовом виде оценки прижаты влево, в месяце остаются по центру */
+.diary-year-card .ms-table .ms-marks {
+    justify-content: flex-start;
+}
+
+/* Таблица года: оценки предмета в строку + средний балл и пропуски */
+.ms-table .ys-grades-th,
+.ms-table .ys-stat-th {
+    background: var(--nav-bg);
+    color: var(--text);
+    font-weight: 600;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+}
+
+.ms-table .ys-grades-th {
+    min-width: 220px;
+}
+
+.ms-table .ys-stat-th {
+    min-width: 52px;
+}
+
+.ms-table .ys-grades {
+    padding: 8px 10px;
+    text-align: left;
+    min-width: 220px;
+    border: 1px solid var(--border);
+}
+
+.ms-table .ys-stat {
+    min-width: 52px;
+    width: 52px;
+    padding: 8px 4px;
+    text-align: center;
+    font-weight: 700;
+    border: 1px solid var(--border);
+}
+
+/* Верх таблицы полностью зелёный (месяц и год) */
+.ms-table thead .ms-num-th,
+.ms-table thead .ms-subj-th,
+.ms-table thead .ys-grades-th,
+.ms-table thead .ys-stat-th {
+    background: var(--accent);
+    color: var(--text-on-accent);
+}
+
+/* Подсказка под таблицей */
+.diary-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* Летние каникулы */
+.diary-summer-card {
+    padding: 50px 20px;
+    text-align: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.diary-summer-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.diary-summer-note {
+    margin-top: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* ———————————————————————————————————
+   Настройки
+   ——————————————————————————————————— */
+
+/* Контейнер страниц — родитель для кнопки настроек (справа сверху) */
+.content-about {
+    position: relative;
+}
+
+.settings-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--nav-border);
+    border-radius: 50%;
+    background: var(--container-bg);
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text);
+    cursor: pointer;
+    line-height: 1;
+    box-shadow: 0 4px 12px rgba(32, 32, 32, 0.08);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.settings-btn:hover {
+    background: var(--nav-hover);
+    color: var(--accent);
+}
+
+.settings-gear {
+    font-size: 15px;
+    line-height: 1;
+}
+
+/* Окно настроек */
+.settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 26, 22, 0.5);
+}
+
+.settings-box {
+    width: 90%;
+    min-width: 320px;
+    max-width: 400px;
+    padding: 20px 22px;
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(32, 32, 32, 0.28);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.settings-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.settings-close {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.settings-close:hover {
+    background: var(--nav-hover);
+    color: var(--text);
+}
+
+.settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.settings-section-title {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.settings-section + .settings-section {
+    margin-top: 22px;
+}
+
+/* Выпадающие списки отделения и группы */
+.settings-select {
+    width: 100%;
+    max-width: 320px;
+    padding: 9px 12px;
+    border: 1px solid var(--nav-border);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.settings-select:hover {
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] .settings-select {
+    background: var(--accent-light);
+}
+
+/* Переключатель темы: светлая / тёмная */
+.theme-toggle {
+    display: inline-flex;
+    height: 38px;
+    padding: 3px;
+    border: 1px solid var(--nav-border);
+    border-radius: 19px;
+    background: var(--panel-bg);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.theme-opt {
+    border: none;
+    background: transparent;
+    border-radius: 16px;
+    padding: 0 18px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.theme-opt:hover {
+    color: var(--accent);
+}
+
+.theme-opt.selected {
+    background: var(--accent);
+    color: var(--text-on-accent);
+}
+
+/* Выбор цвета оформления */
+.color-toggle {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.color-opt {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.color-opt:hover {
+    transform: scale(1.12);
+}
+
+.color-opt.selected {
+    box-shadow: 0 0 0 3px var(--container-bg), 0 0 0 5px var(--accent);
+}
+
+.color-opt.green   { background: #3f5d40; }
+.color-opt.blue    { background: #3a6ea5; }
+.color-opt.red     { background: #b5433f; }
+.color-opt.orange  { background: #c6782e; }
+.color-opt.purple  { background: #7a5ca8; }
+.color-opt.teal    { background: #2e8b80; }
+.color-opt.pink    { background: #c05a84; }
+
+/* 8-й пункт: собственный цвет из палитры */
+.color-custom {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    background: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+    transition: transform 0.1s ease;
+}
+
+.color-custom:hover {
+    transform: scale(1.12);
+}
+
+.color-custom.selected {
+    box-shadow: 0 0 0 3px var(--container-bg), 0 0 0 5px var(--accent);
+}
+
+.color-custom::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.45;
+}
+
+.color-custom input[type="color"] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    opacity: 0;
+    cursor: pointer;
+}
+
+@media (max-width: 700px) {
+    .settings-btn {
+        top: 10px;
+        right: 10px;
+    }
+    .settings-box {
+        min-width: 0;
+    }
+}
+
+/* Утилита скрытия */
+.hidden {
+    display: none !important;
+}
