@@ -6,7 +6,13 @@
     <title>Дневник</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="icon" type="image/png" href="favicon.png">
-    <script src="js/theme.js"></script>
+    <!-- mpt-parse.js — разбор страниц, общий с Node-загрузчиками;
+         live.js — подставляет прошлую загрузку и обновляет данные с mpt.ru -->
+    <script defer src="js/mpt-parse.js"></script>
+    <script defer src="data/schedule.js"></script>
+    <script defer src="js/live.js"></script>
+    <script defer src="js/data.js"></script>
+    <script defer src="js/theme.js"></script>
 </head>
 <body>
     <div class="container">
@@ -96,7 +102,7 @@
         </div>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/diary.js"></script>
+    <script defer src="js/diary.js"></script>
+    <script defer src="js/diary-settings.js"></script>
 </body>
 </html>

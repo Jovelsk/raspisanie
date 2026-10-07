@@ -6,7 +6,13 @@
     <title>Расписание</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="icon" type="image/png" href="favicon.png">
-    <script src="js/theme.js"></script>
+    <!-- mpt-parse.js — разбор страниц, общий с Node-загрузчиками;
+         live.js — подставляет прошлую загрузку и обновляет данные с mpt.ru -->
+    <script defer src="js/mpt-parse.js"></script>
+    <script defer src="data/schedule.js"></script>
+    <script defer src="js/live.js"></script>
+    <script defer src="js/data.js"></script>
+    <script defer src="js/theme.js"></script>
 </head>
 <body>
     <div class="container">
@@ -29,9 +35,10 @@
         <div class="content-about">
             <div class="page-title" id="class-title"></div>
 
-            <!-- Дата и легенда недель -->
+            <!-- Дата, неделя и легенда недель -->
             <div class="schedule-meta">
                 <span class="meta-date" id="schedule-date">—</span>
+                <span class="meta-date meta-week" id="schedule-week">—</span>
                 <span class="legend">
                     <span class="legend-item"><span class="legend-chip w1"></span>Числитель</span>
                     <span class="legend-item"><span class="legend-chip w2"></span>Знаменатель</span>
@@ -40,10 +47,12 @@
 
             <!-- Карточки дней (заполняются скриптом) -->
             <div class="days-grid" id="days-grid"></div>
+
+            <!-- Подпись под расписанием -->
+            <div class="schedule-caption" id="schedule-updated">—</div>
         </div>
     </div>
 
-    <script src="js/data.js"></script>
-    <script src="js/schedule.js"></script>
+    <script defer src="js/schedule.js"></script>
 </body>
 </html>

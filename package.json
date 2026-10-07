@@ -1,0 +1,27 @@
+{
+  "name": "mpt-diary",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Расписание, замены и дневник МПТ: статический сайт без сборки",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "fetch-schedule": "node tools/fetch-schedule.mjs",
+    "test": "node tools/check-all.cjs",
+    "check-data": "node tools/check-data.cjs",
+    "check-snapshots": "node tools/check-snapshots.cjs",
+    "check-live": "node tools/check-live.cjs",
+    "check-render": "node tools/check-render.cjs",
+    "check-diary-marks": "node tools/check-diary-marks.cjs",
+    "check-diary-teachers": "node tools/check-diary-teachers.cjs",
+    "check-diary-history": "node tools/check-diary-history.cjs",
+    "check-diary-settings": "node tools/check-diary-settings.cjs",
+    "check-replacements": "node tools/check-replacements.cjs",
+    "fetch-replacements": "node tools/fetch-replacements.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
+  }
+}

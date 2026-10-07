@@ -5,11 +5,11 @@
     if (!DATA) return;
 
     var DAYS = DATA.DAYS;
-    var DAYS_INFO = DATA.DAYS_INFO;
     var WEEK_W1 = DATA.WEEK_W1;
     var WEEK_W2 = DATA.WEEK_W2;
     var PAIR_TIMES = DATA.PAIR_TIMES;
-    var SCHEDULE = DATA.SCHEDULE;
+    // Сетку пар не копируем: всегда читаем через DATA.scheduleForDate(date),
+    // иначе снова получим пустую копию, если раскладка едет позже нас.
 
     var SHORT_DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
     var MONTHS_GEN = [
@@ -24,6 +24,153 @@
     var STORE_KEY = "mpt-diary-grades-v2";
     var OLD_KEY = "mpt-diary-grades-v1";
     var MODE_KEY = "mpt-diary-mode";
+    var EXPORT_KEY = "mpt-diary-exported-at";
+    var EXPORT_SNAP_KEY = "mpt-diary-exported-snapshot";
+
+    var storageProblem = null;   // куда жаловаться, если запись не вышла
+    var lastProblemText = ""; // одно и то же предупреждение повторяем не дважды
+
+    function storageSay(text) {
+        if (!storageProblem || text === lastProblemText) return;
+        lastProblemText = text;
+        storageProblem(text);
+    }
+
+    // Хранилище с резервной копией: та же схема, что в data.js, но свои данные
+    function readStore() {
+        var out = null;
+        try {
+            var raw = window.localStorage.getItem(STORE_KEY);
+            if (raw) {
+                var parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === "object") out = parsed;
+            }
+        } catch (e) { /* нечитаемо — попробуем копию */ }
+        if (out) return out;
+        try {
+            var rawB = window.localStorage.getItem(STORE_KEY + "-backup");
+            if (rawB) {
+                var parsedB = JSON.parse(rawB);
+                if (parsedB && typeof parsedB === "object") {
+                    storageSay("Отметки в основном хранилище не читаются — взяты из запасной копии.");
+                    return parsedB;
+                }
+            }
+        } catch (e) { /* копии нет */ }
+        return null;
+    }
+
+    // Хранилище с резервной копией: та же схема, что в data.js, но свои данные
+    function writeStore(value) {
+        var json = JSON.stringify(value);
+        try {
+            localStorage.setItem(STORE_KEY, json);
+        } catch (e) {
+            storageSay("Браузер не смог сохранить отметки: хранилище переполнено или недоступно. Выгрузите настройки.");
+            return false;
+        }
+        try {
+            localStorage.setItem(STORE_KEY + "-backup", json);
+        } catch (e) { /* на копию места не хватило — не беда */ }
+        return true;
+    }
+
+    // ——————————————————————————————————
+    // ОТМЕТКИ ПРИНАДЛЕЖАТ ГРУППЕ
+    // В хранилище лежит выгрузка по всем группам:
+    //     store["отделение|группа"][неделя][день][пара]
+    // grades — отметки текущей группы, ссылка внутрь store. Поэтому весь
+    // остальной код работает с ними как раньше, а переключение группы просто
+    // переставляет эту ссылку.
+    //——————————————————————————————————-
+
+    var store = {};
+    var grades = {};
+
+    function groupKeyOf() {
+        if (DATA.groupKeyOf) return DATA.groupKeyOf(DATA.otdel, DATA.grupa);
+        return (DATA.otdel || "") + "|" + (DATA.grupa || "");
+    }
+
+    // Старый формат держал недели прямо в корне — переносим их под текущую
+    // группу. Пока группа неизвестна (данные с сайта ещё не пришли), ничего не
+    // трогаем: иначе отметки уехали бы в «пустую» группу и пропали бы с глаз.
+    function migrateToGroups() {
+        var key = groupKeyOf();
+        if (key === "|") return false;
+        var weeks = {};
+        var moved = false;
+        for (var k in store) {
+            if (!Object.prototype.hasOwnProperty.call(store, k)) continue;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(k)) { weeks[k] = store[k]; delete store[k]; moved = true; }
+        }
+        if (!moved) return false;
+        var own = store[key] || {};
+        for (var w in weeks) {
+            if (Object.prototype.hasOwnProperty.call(weeks, w)) own[w] = weeks[w];
+        }
+        store[key] = own;
+        return true;
+    }
+
+    // Переставить grades на текущую группу
+    function useGroup() {
+        var key = groupKeyOf();
+        // Пока группа не выбрана, работать не с чем: даём пустую заготовку, но в
+        // хранилище её не кладём — иначе туда уезжает пустая запись «|»
+        if (key === "|") { grades = {}; return; }
+        if (!store[key]) store[key] = {};
+        grades = store[key];
+    }
+
+    // Отпечаток текущих данных: если он не совпадает с тем, что уехало
+    // в файл при последней выгрузке, значит изменения ещё не выгружены.
+    // Считаем по отметкам текущей группы — их же и выгружаем.
+    function dataSnapshot() {
+        var periods = DATA.manualPeriods();
+        return JSON.stringify({
+            otdel: DATA.otdel,
+            grupa: DATA.grupa,
+            grades: grades,
+            periods: periods
+        });
+    }
+
+    function markExported() {
+        var snap = dataSnapshot();
+        try {
+            localStorage.setItem(EXPORT_SNAP_KEY, snap);
+        } catch (e) { /* без этого просто не покажем пометку */ }
+    }
+
+    // Есть ли невыгруженные изменения. После выгрузки файла с тем же
+    // содержимым — уже нет, даже если страницу перезагрузили.
+    // Если выгрузки не было никогда, невыгружено всё, что есть.
+    function hasUnexported() {
+        var snap = null;
+        try {
+            snap = localStorage.getItem(EXPORT_SNAP_KEY);
+        } catch (e) { return false; }
+        if (snap == null) {
+            return countWeeks(grades) > 0 || DATA.isManual();
+        }
+        return snap !== dataSnapshot();
+    }
+
+    // Точка у шестерёнки и предупреждение в окне настроек — одно и то же
+    // состояние: после выгрузки что-то менялось, файл устарел
+    function refreshExportMark() {
+        var dirty = hasUnexported();
+        var btn = document.getElementById("settings-btn");
+        if (btn) btn.classList.toggle("has-changes", dirty);
+        if (window.MPTSettings && window.MPTSettings.setNotice) {
+            window.MPTSettings.setNotice(dirty
+                ? "<b>Есть несохранённые изменения.</b> Отметки и правки дневника лежат " +
+                  "только в этом браузере — нажми «Экспорт» во вкладке «Дневник», " +
+                  "иначе при очистке данных их негде будет взять."
+                : "");
+        }
+    }
 
     var WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -65,7 +212,7 @@
     }
 
     // Ключ группы предмет+преподаватель (английский — единая группа)
-    function groupKey(subj, teacher) {
+    function subjectKey(subj, teacher) {
         return subj + "|" + (isEnglishSubj(subj) ? "" : teacher);
     }
 
@@ -153,6 +300,33 @@
         okBtn.focus();
     }
 
+    // Своё окно уведомления (alert)
+    var alertOverlay = null;
+    function alertPopup(message) {
+        if (alertOverlay) { alertOverlay.remove(); alertOverlay = null; }
+        var overlay = document.createElement("div");
+        overlay.className = "c-overlay";
+        var box = document.createElement("div");
+        box.className = "c-box";
+        box.innerHTML =
+            '<p class="c-msg"></p>' +
+            '<div class="c-btns"><button type="button" class="c-ok">ОК</button></div>';
+        box.querySelector(".c-msg").textContent = message;
+        var okBtn = box.querySelector(".c-ok");
+        function close() {
+            overlay.remove();
+            alertOverlay = null;
+        }
+        okBtn.addEventListener("click", close);
+        overlay.addEventListener("click", function (ev) {
+            if (ev.target === overlay) close();
+        });
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        alertOverlay = overlay;
+        okBtn.focus();
+    }
+
     function mondayIso(d) {
         return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
     }
@@ -208,10 +382,9 @@
         return weekDiff(firstWeekMonday(ref), monday) + 1;
     }
 
-    // Первая неделя учебного года — числитель, дальше чередуются
+    // Чётность просматриваемой недели — тоже от якоря mpt.ru
     function viewParity() {
-        var w = weekNoFromYear(viewMonday);
-        return (w % 2 === 1) ? WEEK_W1 : WEEK_W2;
+        return DATA.parityOfMonday(viewMonday);
     }
 
     function isSummerMonday(monday) {
@@ -250,12 +423,12 @@
 
     function load() {
         viewMonday = isoWeekMonday(new Date());
-        try {
-            grades = JSON.parse(localStorage.getItem(STORE_KEY)) || {};
-        } catch (e) {
-            grades = {};
-        }
+        // основное хранилище, при нечитаемом — запасная копия
+        store = readStore() || {};
+        var movedToGroups = migrateToGroups();
+        useGroup();
         migrateOld();
+        if (movedToGroups) saveGrades();
     }
 
     function migrateOld() {
@@ -277,45 +450,393 @@
     }
 
     function saveGrades() {
+        // Заодно убираем пустую запись «|», которую накопили прежние версии:
+        // она не значит ничего, а в выгрузку попадала
+        if (store["|"] && !Object.keys(store["|"]).length) delete store["|"];
+        if (!writeStore(store)) return false;
+        refreshExportMark();
+        return true;
+    }
+
+    // Другая вкладка изменила отметки — показываем их, а не старые
+    function watchOtherTabs() {
+        if (!window.addEventListener) return;
+        window.addEventListener("storage", function (ev) {
+            if (!ev || ev.key !== STORE_KEY) return;
+            var fresh = readStore();
+            if (!fresh) return;
+            grades = fresh;
+            refreshExportMark();
+            render();
+        });
+    }
+
+    // ——————————————————————————————————
+    // ВЫГРУЗКА / ЗАГРУЗКА ФАЙЛА (только на устройство)
+    // В файле — не только оценки, а всё, из чего живёт дневник: отметки,
+    // ручное расписание и выбранная группа.
+    // ——————————————————————————————————
+
+    function countWeeks(obj) {
+        var n = 0;
+        for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k)) n++;
+        return n;
+    }
+
+    var lastDownloadAt = 0;
+
+    function downloadJson(payload, name) {
+        // страховка от двух файлов на один клик: повтор подряд игнорируем
+        var now = Date.now();
+        if (now - lastDownloadAt < 1000) return false;
+        lastDownloadAt = now;
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        return true;
+    }
+
+    // Приводит чужую сетку к нашей форме: { "ПН": [ {pair, subj, teacher, week} ] }
+    // week === null означает «пара одна и та же обе недели», absent — «нет пары».
+    function normalizeSchedule(src) {
+        if (!src || typeof src !== "object") return null;
+        var out = {};
+        for (var di = 0; di < DAYS.length; di++) {
+            var day = DAYS[di];
+            var list = Object.prototype.toString.call(src[day]) === "[object Array]" ? src[day] : [];
+            var clean = [];
+            for (var i = 0; i < list.length; i++) {
+                var it = list[i];
+                if (!it || typeof it !== "object") continue;
+                var pair = +it.pair;
+                if (!(pair >= 1 && pair <= 5)) continue;
+                if (it.absent) {
+                    // у пометки «нет пары» неделя лежит в absent, а не в week
+                    var mark = (it.absent === WEEK_W1 || it.absent === WEEK_W2) ? it.absent : WEEK_W1;
+                    clean.push({ pair: pair, absent: mark });
+                    continue;
+                }
+                var week = (it.week === WEEK_W1 || it.week === WEEK_W2) ? it.week : null;
+                var subj = String(it.subj == null ? "" : it.subj).trim();
+                if (!subj) continue;
+                var row = { pair: pair, subj: subj, teacher: String(it.teacher == null ? "" : it.teacher).trim() };
+                if (week) row.week = week;
+                clean.push(row);
+            }
+            out[day] = clean;
+        }
+        return out;
+    }
+
+    // Ручные периоды в понятном виде: [{from, to, schedule}].
+    // from === null означает «с самого начала». Всё, что не влезло
+    // (мусор, периоды за последним днём правки), отбрасываем.
+    function normalizePeriods(src) {
+        var list = [];
+        if (!src || Object.prototype.toString.call(src) !== "[object Array]") return list;
+        var limit = DATA.manualLimitDate();
+        for (var i = 0; i < src.length; i++) {
+            var p = src[i];
+            if (!p || typeof p !== "object") continue;
+            var from = p.from == null ? null : String(p.from);
+            var to = p.to == null ? null : String(p.to);
+            if (!isIsoDay(to)) continue;
+            if (from !== null && !isIsoDay(from)) continue;
+            if (from && from > to) continue;
+            if (limit && to > limit) continue;
+            var grid = normalizeSchedule(p.schedule || p.grid);
+            if (!grid) continue;
+            list.push({ from: from, to: to, schedule: grid });
+        }
+        return list;
+    }
+
+    function isIsoDay(s) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
+    }
+
+    // 1 период, 2 периода, 5 периодов — для подтверждений и подписей
+    function periodsWord(n) {
+        if (n % 10 === 1 && n % 100 !== 11) return n + " период";
+        if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) return n + " периода";
+        return n + " периодов";
+    }
+
+    function exportSettings() {
+        var weeks = countWeeks(grades);
+        var periods = DATA.manualPeriods();
+        var history = DATA.versions ? DATA.versions() : [];
+        var payload = {
+            app: "mpt-diary",
+            kind: "settings",
+            version: 6,
+            exportedAt: new Date().toISOString(),
+            group: { otdel: DATA.otdel, grupa: DATA.grupa },
+            mode: viewMode,
+            grades: grades
+        };
+        // История версий расписания: без неё на другом устройстве прошлые
+        // недели показались бы по нынешнему расписанию
+        if (history && history.length) payload.versions = history;
+        if (periods.length) {
+            payload.schedule = {
+                manual: true,
+                firstFetchDate: DATA.firstFetchDate(),
+                periods: periods
+            };
+        }
+        var safe = String(DATA.grupa).replace(/[^\w.-]+/g, "-");
+        var saved = downloadJson(payload, "mpt-" + safe + "-" + mondayIso(new Date()) + ".json");
+        // запоминаем, когда последний раз выгружали: показываем дату в настройках
         try {
-            localStorage.setItem(STORE_KEY, JSON.stringify(grades));
-        } catch (e) { /* ignore */ }
+            localStorage.setItem(EXPORT_KEY, payload.exportedAt);
+        } catch (e) { /* приватный режим — просто не покажем дату */ }
+        if (saved) {
+            // файл ушёл с тем же содержимым — невыгруженных правок больше нет
+            markExported();
+            refreshExportMark();
+        } else {
+            alertPopup("Файл не сохранился. Нажми «Экспорт» ещё раз.");
+            return;
+        }
+        if (weeks === 0 && !periods.length) {
+            alertPopup("Файл сохранён, но в нём пока пусто: ни отметок, ни ручных правок.");
+        }
     }
 
-    function getGrade(day, pair) {
-        var w = grades[weekKey(viewMonday)];
-        return w && w[day] ? (w[day][pair] || "") : "";
+    function lastExportAt() {
+        try {
+            return localStorage.getItem(EXPORT_KEY) || "";
+        } catch (e) {
+            return "";
+        }
     }
 
-    function setGrade(day, pair, val) {
-        var key = weekKey(viewMonday);
-        var w = grades[key] || (grades[key] = {});
-        var d = w[day] || (w[day] = {});
-        if (val) d[pair] = val;
-        else delete d[pair];
-        saveGrades();
+    function normalizeImported(parsed) {
+        if (!parsed || typeof parsed !== "object") return null;
+        var src = (parsed.grades && typeof parsed.grades === "object") ? parsed.grades : parsed;
+        var out = {};
+        for (var week in src) {
+            if (!Object.prototype.hasOwnProperty.call(src, week)) continue;
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(week)) continue;
+            var days = src[week];
+            if (!days || typeof days !== "object") continue;
+            var cleanWeek = {};
+            for (var day in days) {
+                if (!Object.prototype.hasOwnProperty.call(days, day)) continue;
+                if (DAYS.indexOf(day) === -1) continue;
+                var pairs = days[day];
+                if (!pairs || typeof pairs !== "object") continue;
+                var cleanDay = {};
+                for (var pair in pairs) {
+                    if (!Object.prototype.hasOwnProperty.call(pairs, pair)) continue;
+                    if (!/^[1-5]$/.test(pair)) continue;
+                    // Принимаем и старую строку, и новый массив оценок
+                    var marks = toMarks(pairs[pair]);
+                    if (marks.length) cleanDay[pair] = marks;
+                }
+                if (Object.keys(cleanDay).length) cleanWeek[day] = cleanDay;
+            }
+            if (Object.keys(cleanWeek).length) out[week] = cleanWeek;
+        }
+        return out;
     }
 
-    function setGradeForDate(date, pair, val) {
-        var key = weekKey(isoWeekMonday(date));
-        var dayKey = DAYS[date.getDay() - 1];
-        var w = grades[key] || (grades[key] = {});
-        var d = w[dayKey] || (w[dayKey] = {});
-        if (val) d[pair] = val;
-        else delete d[pair];
-        saveGrades();
-    }
-
-    // Все отметки за дату (по всем парам), отсортированные по номеру пары
-    function gradesForDay(date) {
-        var ws = grades[weekKey(isoWeekMonday(date))];
-        if (!ws) return [];
-        var dayKey = DAYS[date.getDay() - 1];
-        if (!dayKey || !ws[dayKey]) return [];
-        var pairs = ws[dayKey];
-        var keys = Object.keys(pairs).sort(function (a, b) { return +a - +b; });
+    // История версий расписания из файла: [{from: "ГГГГ-ММ-ДД"|null, schedule}].
+    // Непонятные записи отбрасываем: лучше без истории, чем с мусором.
+    function normalizeVersions(src) {
+        if (Object.prototype.toString.call(src) !== "[object Array]") return null;
         var out = [];
-        for (var i = 0; i < keys.length; i++) out.push(pairs[keys[i]]);
+        for (var i = 0; i < src.length; i++) {
+            var v = src[i];
+            if (!v || typeof v !== "object") continue;
+            if (!v.schedule || typeof v.schedule !== "object") continue;
+            var from = (typeof v.from === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v.from)) ? v.from : null;
+            out.push({ from: from, schedule: v.schedule });
+        }
+        return out.length ? out : null;
+    }
+
+    // Разбирает файл: и новый (настройки), и старый (только оценки)
+    function readSettingsFile(parsed) {
+        if (!parsed || typeof parsed !== "object") return null;
+        var isSettings = parsed.kind === "settings";
+        var weeks = normalizeImported(parsed);
+        // старый файл обязан хоть что-то содержать, иначе это не он
+        if (!isSettings && (!weeks || countWeeks(weeks) === 0)) return null;
+        var out = { settings: isSettings, grades: weeks || {}, versions: normalizeVersions(parsed.versions) };
+        if (isSettings) {
+            if (parsed.group && typeof parsed.group === "object") {
+                out.otdel = parsed.group.otdel || null;
+                out.grupa = parsed.group.grupa || null;
+            }
+            out.mode = (parsed.mode === "month" || parsed.mode === "year") ? parsed.mode : null;
+            if (parsed.schedule && typeof parsed.schedule === "object") {
+                // новый формат: список периодов; старый: одна сетка на весь срок
+                if (Object.prototype.toString.call(parsed.schedule.periods) === "[object Array]") {
+                    var periods = normalizePeriods(parsed.schedule.periods);
+                    if (periods.length) out.periods = periods;
+                } else {
+                    var grid = normalizeSchedule(parsed.schedule.grid);
+                    if (grid) {
+                        out.periods = [{ from: null, to: DATA.manualLimitDate(), schedule: grid }];
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    function applyImport(data) {
+        var weeks = countWeeks(data.grades);
+        // ту же группу ищем заранее: ею же потом переключимся
+        var targetDep = data.otdel ? DATA.findDepartment(data.otdel) : null;
+        var targetGrp = (targetDep && data.grupa) ? DATA.findGroup(targetDep, data.grupa) : null;
+        var lines = [];
+        lines.push("Группа: " + (targetGrp ? targetDep + ", " + targetGrp : "как сейчас"));
+        lines.push("Отметок: " + (weeks ? weeks + " нед." : "нет"));
+        lines.push("Расписание: " + (data.periods
+            ? "ручное, " + periodsWord(data.periods.length)
+            : "как сейчас"));
+        lines.push("История расписания: " + (data.versions
+            ? data.versions.length + " вер."
+            : "как сейчас"));
+
+        confirmPopup("Загрузить настройки дневника?\n\n" + lines.join("\n"), "Загрузить", function (ok) {
+            if (!ok) return;
+            var moved = false;
+            if (targetDep && targetGrp) {
+                try {
+                    localStorage.setItem(DATA.OTDEL_KEY, targetDep);
+                    localStorage.setItem(DATA.GRUPA_KEY, targetGrp);
+                } catch (e) { /* не влезло — живём без запоминания выбора */ }
+                DATA.selectGroup(targetDep, targetGrp);
+                moved = true;
+            }
+            if (data.periods) {
+                // Ручные периоды из файла заменяют прежние целиком
+                DATA.clearManual();
+                for (var pi = 0; pi < data.periods.length; pi++) {
+                    DATA.setManualPeriod(data.periods[pi].from, data.periods[pi].to, data.periods[pi].schedule);
+                }
+            }
+            // Отметки из файла относим к той группе, что записана в самом файле:
+            // иначе при импорте до прихода расписания они уехали бы в «пустую»
+            // группу и пропали бы с глаз. Отметки других групп не трогаем.
+            var fileGroup = (data.otdel && data.grupa && DATA.groupKeyOf)
+                ? DATA.groupKeyOf(data.otdel, data.grupa)
+                : groupKeyOf();
+            store[fileGroup] = data.grades || {};
+            useGroup();
+            saveGrades();
+            // История версий: без неё в прошлых неделях показалось бы нынешнее
+            // расписание, то есть с неправильными предметами
+            if (data.versions && data.versions.length) DATA.setVersions(data.versions, fileGroup);
+            if (data.mode && data.mode !== viewMode) {
+                setMode(data.mode);
+            } else {
+                render();
+            }
+            var extra = moved ? "\nГруппа переключена на " + DATA.otdel + ", " + DATA.grupa + "." : "";
+            alertPopup("Настройки загружены." + extra);
+        });
+    }
+
+    function importSettings(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+            var parsed;
+            try {
+                parsed = JSON.parse(String(reader.result));
+            } catch (e) {
+                alertPopup("Не удалось прочитать файл: это не корректный JSON.");
+                return;
+            }
+            var data = readSettingsFile(parsed);
+            if (!data) {
+                alertPopup("Не удалось прочитать файл: неожиданный формат.");
+                return;
+            }
+            applyImport(data);
+        };
+        reader.onerror = function () { alertPopup("Не удалось прочитать файл."); };
+        reader.readAsText(file);
+    }
+
+    // В клетке может быть несколько оценок за пару: ["5"] или ["5","4"].
+    // Раньше там лежала строка, поэтому старое значение приводим к массиву на лету.
+    function toMarks(val) {
+        var out = [];
+        if (val === null || val === undefined || val === "") return out;
+        if (Object.prototype.toString.call(val) === "[object Array]") {
+            for (var i = 0; i < val.length; i++) {
+                var v = "" + val[i];
+                if (v) out.push(v);
+            }
+        } else {
+            out.push("" + val);
+        }
+        return out;
+    }
+
+    function dayStore(date) {
+        var w = grades[weekKey(isoWeekMonday(date))];
+        return w ? w[DAYS[date.getDay() - 1]] : null;
+    }
+
+    // Все оценки за пару в указанный день
+    function getMarks(date, pair) {
+        var d = dayStore(date);
+        return d ? toMarks(d[pair]) : [];
+    }
+
+    function saveMarks(date, pair, list) {
+        var key = weekKey(isoWeekMonday(date));
+        var w = grades[key] || (grades[key] = {});
+        var dayKey = DAYS[date.getDay() - 1];
+        var d = w[dayKey] || (w[dayKey] = {});
+        var clean = toMarks(list);
+        if (clean.length) d[pair] = clean;
+        else delete d[pair];
+        if (!Object.keys(d).length) delete w[dayKey];
+        if (!Object.keys(w).length) delete grades[key];
+        saveGrades();
+    }
+
+    // Дописать оценку в конец (кнопка «+»)
+    function addMark(date, pair, val) {
+        if (!val) return;
+        var list = getMarks(date, pair);
+        if (list.indexOf(val) === -1) list.push(val);
+        saveMarks(date, pair, list);
+    }
+
+    // Переписать оценку по индексу или удалить её (пустое значение)
+    function setMarkAt(date, pair, index, val) {
+        var list = getMarks(date, pair);
+        if (index < 0 || index >= list.length) return;
+        if (val) list[index] = val;
+        else list.splice(index, 1);
+        saveMarks(date, pair, list);
+    }
+
+    // Все отметки за дату (по всем парам и всем слотам), по порядку пар
+    function gradesForDay(date) {
+        var d = dayStore(date);
+        if (!d) return [];
+        var keys = Object.keys(d).sort(function (a, b) { return +a - +b; });
+        var out = [];
+        for (var i = 0; i < keys.length; i++) {
+            var m = toMarks(d[keys[i]]);
+            for (var j = 0; j < m.length; j++) out.push(m[j]);
+        }
         return out;
     }
 
@@ -329,6 +850,45 @@
     // ——————————————————————————————————
     // РЕНДЕРИНГ
     // ——————————————————————————————————
+
+    // Дни недели: ПН…СБ, без воскресенья
+    function weekDates() {
+        var out = [];
+        for (var i = 0; i < 6; i++) out.push(addDays(viewMonday, i));
+        return out;
+    }
+
+    // Последний день периода, показанный по старой версии расписания
+    // Последний день, когда ещё действовало старое расписание. Считаем по всему
+    // сроку, а не по показанному окну: раньше поиск обрывался на конце недели
+    // или месяца, и подпись называла не ту дату
+    function lastStaleDay(from) {
+        var last = null;
+        for (var i = 0; i < 400; i++) {
+            var d = addDays(from, i);
+            if (DATA.isStaleDate(d)) {
+                last = d;
+            } else if (last) {
+                break;   // старые дни идут подряд: после первого нового — конец
+            }
+        }
+        return last;
+    }
+
+    // Плашка в подвале таблицы: одна, растянута вдоль всех дней со старым
+    // расписанием и обрывается на последнем из них. С какого дня действует
+    // новое — не пишем, и так видно по таблице.
+    // baseCols — колонки слева, не являющиеся днями (номер пары, «Предмет»).
+    function staleBand(baseCols, oldCols, until) {
+        if (!oldCols || !until) return "";
+        var label = pad(until.getDate()) + "." + pad(until.getMonth() + 1) + "." + until.getFullYear();
+        // Дней после плашки не добавляем: таблица сама дорисует пустые колонки
+        return '<tfoot><tr class="stale-row">' +
+            '<td class="stale-lead" colspan="' + baseCols + '"></td>' +
+            '<td class="stale-cell" colspan="' + oldCols + '">' +
+            '<span class="stale-band">старое расписание до ' + label + "</span></td>" +
+            "</tr></tfoot>";
+    }
 
     function renderWeekTable() {
         var table = document.getElementById("diary-table");
@@ -356,8 +916,8 @@
 
             for (var dIdx = 0; dIdx < DAYS.length; dIdx++) {
                 var key = DAYS[dIdx];
-                var lessons = SCHEDULE[key] || [];
                 var td = addDays(viewMonday, dIdx);
+                var lessons = DATA.scheduleForDate(td)[key] || [];
                 var isTodayCol = isSameDate(td, now);
                 var tdClass = isTodayCol ? "d-cell today" : "d-cell";
 
@@ -390,14 +950,21 @@
                     html += '<td class="' + tdClass + '"><span class="d-none">—</span></td>';
                 } else {
                     var weekCls = lesson.week ? (lesson.week === WEEK_W1 ? "w1" : "w2") : "";
-                    var grade = getGrade(key, p);
                     html += '<td class="' + tdClass + (weekCls ? " " + weekCls : "") + '">';
                     html += '<span class="d-subj">' + lesson.subj + "</span>";
                     html += '<span class="d-teacher">' + (lesson.teacher || "—") + "</span>";
-                    html += '<button type="button" class="d-mark ' + markCls(grade) + '"' +
-                        ' data-day="' + key + '" data-pair="' + p + '" data-g="' + grade + '">' +
-                        (grade || "+") + "</button>";
-                    html += "</td>";
+                    var marks = getMarks(td, p);
+                    var tdIso = mondayIso(td);
+                    html += '<span class="d-marks">';
+                    for (var mi = 0; mi < marks.length; mi++) {
+                        html += '<button type="button" class="d-mark ' + markCls(marks[mi]) + '"' +
+                            ' data-date="' + tdIso + '" data-pair="' + p +
+                            '" data-slot="' + mi + '" title="Изменить">' + marks[mi] + "</button>";
+                    }
+                    html += '<button type="button" class="d-mark d-mark-add"' +
+                        ' data-date="' + tdIso + '" data-pair="' + p + '" data-slot="-1"' +
+                        ' title="Добавить оценку">+</button>';
+                    html += "</span></td>";
                 }
             }
 
@@ -405,13 +972,24 @@
         }
 
         html += "</tbody>";
+
+        // Плашка старой версии расписания — вдоль тех дней недели,
+        // которые ещё показываются по ней.
+        var wDates = weekDates();
+        var wOld = 0;
+        for (var wi = 0; wi < wDates.length; wi++) {
+            if (DATA.isStaleDate(wDates[wi])) wOld++;
+        }
+        html += staleBand(1, wOld, lastStaleDay(viewMonday));
+
         table.innerHTML = html;
     }
 
-    // Чётность недели конкретной даты
+    // Чётность недели конкретной даты.
+    // Считается от недели, которую mpt.ru отдал как текущую, — так дневник
+    // и расписание всегда показывают одну и ту же чётность.
     function dateParity(d) {
-        var w = weekNoFromYear(isoWeekMonday(d));
-        return (w % 2 === 1) ? WEEK_W1 : WEEK_W2;
+        return DATA.parityOfDate(d);
     }
 
     // Расписание конкретной даты (с учётом чётности её недели):
@@ -419,7 +997,7 @@
     function lessonsForDate(d) {
         var key = DAYS[d.getDay() - 1];
         if (!key) return [];
-        var lessons = SCHEDULE[key] || [];
+        var lessons = DATA.scheduleForDate(d)[key] || [];
         if (lessons.length === 0) return [];
         var parity = dateParity(d);
         var out = [];
@@ -450,11 +1028,16 @@
     }
 
     // Отметки за дату по номерам пар: { "1": "5", ... }
+    // пара -> массив оценок за эту пару в этот день
     function gradesMapForDate(date) {
-        var ws = grades[weekKey(isoWeekMonday(date))];
-        var dayKey = DAYS[date.getDay() - 1];
-        if (!ws || !dayKey || !ws[dayKey]) return {};
-        return ws[dayKey];
+        var d = dayStore(date);
+        var out = {};
+        if (!d) return out;
+        for (var pair in d) {
+            if (!Object.prototype.hasOwnProperty.call(d, pair)) continue;
+            out[pair] = toMarks(d[pair]);
+        }
+        return out;
     }
 
     // Сколько «н» и «б» за диапазон дат
@@ -466,9 +1049,11 @@
             var gm = gradesMapForDate(d);
             for (var i = 0; i < lessons.length; i++) {
                 if (!lessons[i].subj) continue;
-                var g = gm[lessons[i].pair];
-                if (g === "н") out.absent++;
-                else if (g === "б") out.ill++;
+                var list = gm[lessons[i].pair] || [];
+                for (var j = 0; j < list.length; j++) {
+                    if (list[j] === "н") out.absent++;
+                    else if (list[j] === "б") out.ill++;
+                }
             }
         }
         return out;
@@ -501,11 +1086,11 @@
             for (var li = 0; li < lessons.length; li++) {
                 var ls = lessons[li];
                 if (!ls.subj) continue;
-                var key = groupKey(ls.subj, ls.teacher);
+                var key = subjectKey(ls.subj, ls.teacher);
                 if (groups.indexOf(key) === -1) groups.push(key);
                 (marks[key] = marks[key] || []).push({
                     pair: ls.pair,
-                    grade: gmap[ls.pair] || ""
+                    marks: gmap[ls.pair] || []
                 });
             }
             cellMarks[day] = marks;
@@ -553,10 +1138,16 @@
                 if (marks2 && marks2.length) {
                     html += '<span class="ms-marks">';
                     for (var mj = 0; mj < marks2.length; mj++) {
-                        var g = marks2[mj].grade;
-                        html += '<button type="button" class="d-mark ' + markCls(g) + '"' +
-                            ' data-date="' + mondayIso(day2.date) + '" data-pair="' + marks2[mj].pair + '">' +
-                            (g || "+") + "</button>";
+                        var list2 = marks2[mj].marks;
+                        var dateIso = mondayIso(day2.date);
+                        for (var mk = 0; mk < list2.length; mk++) {
+                            html += '<button type="button" class="d-mark ' + markCls(list2[mk]) + '"' +
+                                ' data-date="' + dateIso + '" data-pair="' + marks2[mj].pair +
+                                '" data-slot="' + mk + '">' + list2[mk] + "</button>";
+                        }
+                        html += '<button type="button" class="d-mark d-mark-add"' +
+                            ' data-date="' + dateIso + '" data-pair="' + marks2[mj].pair +
+                            '" data-slot="-1" title="Добавить оценку">+</button>';
                     }
                     html += "</span>";
                 }
@@ -566,6 +1157,15 @@
         }
 
         html += "</tbody>";
+
+        // Плашка старой версии: колонки старых дней подряд с левого края,
+        // подпись — про последний старый день месяца, даже если он без пар
+        var mOld = 0;
+        for (var mi2 = 0; mi2 < days.length; mi2++) {
+            if (DATA.isStaleDate(days[mi2].date)) mOld++;
+        }
+        html += staleBand(2, mOld, lastStaleDay(new Date(y, m, 1)));
+
         table.innerHTML = html;
         if (!monthSubjW) measureMonthSubjW();
         pinSubjWidth(table, monthSubjW);
@@ -583,17 +1183,20 @@
             for (var i = 0; i < lessons.length; i++) {
                 var ls = lessons[i];
                 if (!ls.subj) continue;
-                var key = groupKey(ls.subj, ls.teacher);
+                var key = subjectKey(ls.subj, ls.teacher);
                 if (subjKeys[ls.subj] === undefined) subjKeys[ls.subj] = [];
                 if (subjKeys[ls.subj].indexOf(key) === -1) subjKeys[ls.subj].push(key);
                 if (gradesByKey[key] === undefined) {
                     gradesByKey[key] = [];
                     datesByKey[key] = [];
                 }
-                var g = gmap[ls.pair];
-                if (g) {
-                    gradesByKey[key].push(g);
-                    datesByKey[key].push(d);
+                var list = gmap[ls.pair];
+                if (list && list.length) {
+                    // Несколько оценок за пару — каждая со своей датой
+                    for (var mi = 0; mi < list.length; mi++) {
+                        gradesByKey[key].push(list[mi]);
+                        datesByKey[key].push(d);
+                    }
                 }
             }
         }
@@ -843,13 +1446,13 @@
     popover.appendChild(clearBtn);
 
     var pickDate = null;
-    var pickDay = null;
     var pickPair = null;
+    var pickSlot = -1;   // -1 = добавить новую, иначе индекс правящейся оценки
 
     function hidePicker() {
         pickDate = null;
-        pickDay = null;
         pickPair = null;
+        pickSlot = -1;
         popover.classList.add("hidden");
     }
 
@@ -869,11 +1472,10 @@
     function onPopoverClick(ev) {
         var target = ev.target;
         if (!target.classList || !target.classList.contains("grade-opt")) return;
-        if (pickDate) {
-            setGradeForDate(pickDate, pickPair, target.getAttribute("data-grade"));
-        } else if (pickDay) {
-            setGrade(pickDay, pickPair, target.getAttribute("data-grade"));
-        }
+        if (!pickDate) return;
+        var val = target.getAttribute("data-grade");
+        if (pickSlot < 0) addMark(pickDate, pickPair, val);
+        else setMarkAt(pickDate, pickPair, pickSlot, val);
         hidePicker();
         render();
     }
@@ -931,6 +1533,12 @@
 
     function init() {
         load();
+        watchOtherTabs();
+        // Ошибку записи показываем сразу: хранилище может быть переполнено
+        // или недоступно, и молчать об этом нельзя
+        storageProblem = function (text) { alertPopup(text); };
+        if (DATA.onStorageProblem) DATA.onStorageProblem(storageProblem);
+        refreshExportMark();
 
         // Восстановить вкладку неделя/месяц/год, но с сегодняшней датой
         var saved = "week";
@@ -1001,9 +1609,9 @@
             table.addEventListener("click", function (ev) {
                 var target = ev.target;
                 if (target.classList && target.classList.contains("d-mark")) {
-                    pickDate = null;
-                    pickDay = target.getAttribute("data-day");
+                    pickDate = parseIso(target.getAttribute("data-date"));
                     pickPair = target.getAttribute("data-pair");
+                    pickSlot = +target.getAttribute("data-slot");
                     showPicker(target);
                 }
             });
@@ -1018,8 +1626,8 @@
                     var pair = target.getAttribute("data-pair");
                     if (iso && pair) {
                         pickDate = parseIso(iso);
-                        pickDay = DAYS[pickDate.getDay() - 1];
                         pickPair = pair;
+                        pickSlot = +target.getAttribute("data-slot");
                         showPicker(target);
                     }
                 }
@@ -1103,8 +1711,85 @@
             });
         }
 
+        var exportBtn = document.getElementById("diary-export");
+        if (exportBtn) {
+            exportBtn.addEventListener("click", exportSettings);
+        }
+
+        var importBtn = document.getElementById("diary-import");
+        var importFile = document.getElementById("diary-import-file");
+        if (importBtn && importFile) {
+            importBtn.addEventListener("click", function () { importFile.click(); });
+            importFile.addEventListener("change", function () {
+                importSettings(importFile.files && importFile.files[0]);
+                importFile.value = "";
+            });
+        }
+
+        // Вкладка «Дневник» в настройках: режим редактирования расписания
+        // и выгрузка/загрузка настроек живут там.
+        // isDiaryPage — подсказка другим страницам: вкладку показывать
+        // только в дневнике, на «Расписании» её быть не должно.
+        window.MPTDiary = {
+            DAYS: DAYS,
+            PAIR_TIMES: PAIR_TIMES,
+            exportSettings: exportSettings,
+            importSettings: importSettings,
+            isDiaryPage: true,
+            isManual: function () { return DATA.isManual(); },
+            editableSchedule: function (d) { return DATA.editableSchedule(d); },
+            manualPeriods: function () { return DATA.manualPeriods(); },
+            manualLimitDate: function () { return DATA.manualLimitDate(); },
+            firstFetchDate: function () { return DATA.firstFetchDate(); },
+            lastExportAt: lastExportAt,
+            hasUnexported: hasUnexported,
+            // Отметки наружу — их ставит окошко расширения. Группа берётся та же,
+            // что и в дневнике: ключ группы общий, поэтому отметки не разъедутся.
+            marksFor: function (date, pair) { return getMarks(date, pair); },
+            setMarks: function (date, pair, list) { saveMarks(date, pair, list); },
+            addOneMark: function (date, pair, val) { addMark(date, pair, val); },
+            // окно подтверждения/уведомления — тем же стилем, что и в дневнике
+            confirm: confirmPopup,
+            notify: alertPopup,
+            // applyManual — короткий путь для всего срока правки
+            applyManual: function (grid) {
+                var limit = DATA.manualLimitDate();
+                DATA.setManualPeriod(null, limit, grid);
+                render();
+            },
+            applyPeriod: function (from, to, grid) {
+                var problem = DATA.setManualPeriod(from, to, grid);
+                if (problem) {
+                    alertPopup("Не получилось сохранить период: " + problem + ".");
+                    return problem;
+                }
+                render();
+                return null;
+            },
+            dropPeriod: function (from, to) {
+                DATA.removeManualPeriod(from, to);
+                render();
+            },
+            dropManual: function () {
+                DATA.clearManual();
+                render();
+            }
+        };
+
         var picker0 = document.getElementById("diary-picker");
         if (picker0) picker0.value = mondayIso(new Date());
+
+        // Смена отделения/группы в настройках: сетка пар должна совпасть с расписанием
+        DATA.onChange(function () {
+            if (document.body.getAttribute("data-page") === "diary") {
+                if (window.MPTSettings) window.MPTSettings.show("diary");
+            }
+            // Группа могла смениться — отметки теперь у каждой свои
+            useGroup();
+            refreshExportMark();
+            render();
+        });
+
         render();
     }
 

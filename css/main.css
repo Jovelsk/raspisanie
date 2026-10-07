@@ -25,6 +25,9 @@
     --accent-soft: color-mix(in srgb, var(--accent) 62%, var(--bg));
     --accent-light: color-mix(in srgb, var(--accent) 16%, var(--container-bg));
     --accent-border: color-mix(in srgb, var(--accent) 55%, var(--container-bg));
+    /* Красный для отмен и предупреждений */
+    --danger: #b23b2e;
+
     --w1-bg: #cfe6cd;
     --w1-border: #8fb48d;
     --w1-text: #2e4a30;
@@ -53,6 +56,9 @@
     --nav-border: color-mix(in srgb, var(--accent) 28%, #0b0d0b);
     --border: color-mix(in srgb, var(--accent) 19%, #0b0d0b);
     --stripe: color-mix(in srgb, var(--accent) 11%, #0b0d0b);
+
+    /* На тёмном фоне чистый красный нечитаем — берём светлее */
+    --danger: #e08a7c;
 
     --w1-bg: #2c4630;
     --w1-border: #4c6b50;
@@ -218,7 +224,14 @@
     background: rgba(0, 0, 0, 0.6);
 }
 
-[data-theme="dark"] #diary-picker {
+/* Поля с датой в тёмной теме: браузер сам рисует иконку календаря
+   и сам календарь под тёмную тему. Никаких invert: переворот цвета
+   здесь гасит то, что color-scheme уже сделал, и иконка снова
+   становится тёмной на тёмном фоне */
+[data-theme="dark"] #diary-picker,
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="datetime-local"] {
     color-scheme: dark;
 }
 
@@ -244,13 +257,39 @@ body {
     color: var(--text);
 }
 
+/* Слой с фоновой картинкой: лежит под всем остальным. Картинку ставит
+   js/theme.js напрямую, без переменных — через переменную она терялась.
+   Подложки панелей лежат выше (z-index: -1) и приглушают её по ползунку. */
+#bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    pointer-events: none;
+}
+
 /* Основной контейнер — во весь экран, колонка: меню сверху, контент под ним */
 .container {
     width: 100%;
     height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* Подложка панели. Плотность задаёт ползунок прозрачности фона: при 0% она
+   полностью плотная, как раньше, при 100% — не плотнее 45%, иначе текст
+   расписания сливается с картинкой. Карточки пар остаются плотными всегда,
+   поэтому читаемость не страдает. */
+.container::before {
+    content: "";
+    position: fixed;
+    inset: 0;
     background-color: var(--container-bg);
+    opacity: var(--panel-alpha, 1);
+    z-index: -1;
 }
 
 /* Меню */
@@ -306,7 +345,19 @@ body {
     min-height: 0;
     overflow-y: auto;
     padding: 40px 58px 60px 58px;
+}
+
+/* Подложка страницы — тот самый слой, который закрывал фоновое изображение.
+   Плотность задаёт ползунок прозрачности фона: при 0% подложка полностью
+   плотная, как раньше, при 100% картинка видна сквозь страницу. Карточки пар
+   и меню красятся своим цветом и остаются плотными, поэтому текст читается. */
+.content-about::before {
+    content: "";
+    position: absolute;
+    inset: 0;
     background: var(--panel-bg);
+    opacity: var(--panel-alpha, 1);
+    z-index: -1;
 }
 
 .page-title {
@@ -425,8 +476,8 @@ body {
 
 .day-row {
     display: grid;
-    grid-template-columns: 62px 1fr;
-    gap: 6px;
+    grid-template-columns: 74px 1fr;
+    gap: 10px;
     align-items: center;
     padding: 7px 8px;
     border-bottom: 1px solid var(--border);
@@ -438,12 +489,25 @@ body {
     border-bottom: none;
 }
 
+/* В сегодняшней карточке разделители заметнее */
+.day-card.today .day-row {
+    border-bottom-color: color-mix(in srgb, var(--accent) 30%, var(--container-bg));
+}
+
+.day-card.today .pair-cell {
+    border-right-color: color-mix(in srgb, var(--accent) 30%, var(--container-bg));
+}
+
+/* Вертикальный разделитель: номер пары и время | пара с преподавателем */
 .pair-cell {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
+    align-self: stretch;
+    padding-right: 8px;
+    border-right: 1px solid var(--border);
 }
 
 .pair-cell .pair-num {
@@ -513,11 +577,22 @@ body {
     padding: 0;
 }
 
+/* Пара без занятий: прочерк без рамки, чтобы не пестрело */
 .wcell-empty {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 30px;
+    border: none;
+    border-radius: 0;
+    background: none;
+    color: var(--text-muted);
+}
+
+/* «нет пары» — это окно недели, поэтому рамка и скругление как у обычной пары */
+.wcell-empty.wcell-absent {
+    border: 1px solid var(--border);
+    border-radius: 8px;
 }
 
 /* Выходной день */
@@ -588,6 +663,41 @@ body {
     font-weight: 600;
 }
 
+/* Пилюля «неделя …» — та же рамка, что у даты */
+.meta-week {
+    font-weight: 600;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.meta-week.warn {
+    color: #b8860b;
+    border-color: #b8860b;
+}
+
+[data-theme="dark"] .meta-week.warn {
+    color: #e0a53a;
+    border-color: #e0a53a;
+}
+
+/* Подпись под расписанием: «обновлено …» */
+.schedule-caption {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-family: 'Segoe UI', sans-serif;
+    margin-top: -8px;
+}
+
+.schedule-caption.warn {
+    color: #b8860b;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .schedule-caption.warn {
+    color: #e0a53a;
+}
+
 /* Легенда недель */
 .schedule-meta .legend {
     background: var(--container-bg);
@@ -653,6 +763,129 @@ body {
     margin-top: 8px;
 }
 
+/* -----------------------------------
+   Список замен
+   ----------------------------------- */
+
+.rep-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.rep-day {
+    background: var(--container-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 6px 14px rgba(32, 32, 32, 0.08);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.rep-day-head {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 14px;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.rep-day-date {
+    font-weight: 400;
+    font-size: 13px;
+    opacity: 0.85;
+    margin-left: auto;
+}
+
+.rep-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    border-top: 1px solid var(--border);
+}
+
+/* Номер пары — тот же акцент, что и в расписании */
+.rep-pair {
+    flex: 0 0 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-light);
+    color: var(--accent-soft);
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.rep-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 8px;
+}
+
+.rep-from,
+.rep-to {
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.rep-from {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--danger);
+    text-decoration-thickness: 1px;
+}
+
+/* Отменённая пара: зачёркивать «на что заменяют» незачем, там статус */
+.rep-cancel .rep-from {
+    text-decoration: none;
+    color: var(--text);
+}
+
+.rep-cancel .rep-to {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* Дополнительное занятие не отменяет пару, а занимает свободную */
+.rep-extra .rep-from {
+    text-decoration: none;
+    font-style: italic;
+}
+
+.rep-arrow {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.rep-added {
+    flex-basis: 100%;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.8;
+}
+
+@media (max-width: 480px) {
+    .rep-row {
+        gap: 9px;
+        padding: 10px 11px;
+    }
+
+    .rep-day-head {
+        padding: 9px 11px;
+        font-size: 13px;
+    }
+}
+
 /* ———————————————————————————————————
    Дневник
    ——————————————————————————————————— */
@@ -704,6 +937,11 @@ body {
 
 .diary-meta .week-btn.reset:hover {
     color: var(--text);
+}
+
+.diary-meta .week-btn.io {
+    color: var(--accent);
+    border-style: solid;
 }
 
 /* Чипы итогов: пропуски и болезни */
@@ -983,6 +1221,38 @@ body {
     border-right-color: var(--accent) !important;
 }
 
+/* Плашка старой версии расписания: растянута вдоль прошедших дней
+   и обрывается на последнем из них */
+.diary-table tfoot tr,
+.ms-table tfoot tr {
+    background: transparent;
+}
+
+.diary-table .stale-lead,
+.ms-table .stale-lead,
+.diary-table .stale-cell,
+.ms-table .stale-cell {
+    padding: 0 2px 8px;
+    vertical-align: top;
+    border-right: none;
+    background: transparent;
+}
+
+.stale-band {
+    display: block;
+    padding: 4px 10px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: var(--container-bg);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.3;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Клетка отметки (как в Дневник.ру) */
 .d-mark {
     display: inline-flex;
@@ -1005,6 +1275,34 @@ body {
 
 .d-mark:hover {
     transform: scale(1.18);
+}
+
+/* Несколько оценок за пару: чипы в ряд + кнопка добавления */
+.d-marks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 3px;
+}
+
+.d-mark.d-mark-add {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-muted);
+    font-weight: 400;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    border-radius: 4px;
+    flex: none;
+}
+
+.d-mark.d-mark-add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: none;
 }
 
 .d-mark.g5 {
@@ -1106,6 +1404,7 @@ body {
     font-size: 15px;
     line-height: 1.4;
     color: var(--text);
+    white-space: pre-line;
 }
 
 .c-btns {
@@ -1484,6 +1783,74 @@ body {
     line-height: 1;
 }
 
+/* Точка у шестерёнки: после выгрузки что-то менялось, файл устарел.
+   В углу её не видно случайно — она маленькая и того же цвета, что акцент */
+.settings-btn.has-changes::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--container-bg);
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.settings-btn.has-changes {
+    color: var(--accent);
+}
+
+/* Поле пути к фоновому изображению и ползунок прозрачности */
+.settings-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+}
+
+.settings-input::placeholder {
+    color: var(--text);
+    opacity: .45;
+}
+
+.settings-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.35;
+    opacity: .7;
+}
+
+.settings-hint-bad {
+    opacity: 1;
+    color: var(--accent);
+}
+
+.bg-alpha-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bg-alpha-row input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+}
+
+.bg-alpha-value {
+    min-width: 40px;
+    text-align: right;
+    font-size: 12px;
+    opacity: .8;
+}
+
 /* Окно настроек */
 .settings-overlay {
     position: fixed;
@@ -1493,9 +1860,23 @@ body {
     bottom: 0;
     z-index: 1100;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    overflow-y: auto;
     background: rgba(20, 26, 22, 0.5);
+}
+
+/* Окно центрируется, пока помещается; если экран совсем низкий,
+   прокручивается подложка, а не сама рамка настроек.
+   Колонка из окна и предупреждения под ним: ширину окна задаёт вкладка,
+   а блок под ним повторяет её */
+.settings-window {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin: auto;
 }
 
 .settings-box {
@@ -1557,6 +1938,475 @@ body {
 
 .settings-section + .settings-section {
     margin-top: 22px;
+}
+
+/* Вкладки настроек: появляются, когда вкладок больше одной */
+.settings-tabs {
+    display: flex;
+    gap: 4px;
+    margin: -6px 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--nav-border);
+}
+
+.settings-tabs[hidden] {
+    display: none;
+}
+
+.settings-tab {
+    padding: 7px 14px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.settings-tab:hover {
+    background: var(--nav-hover);
+    color: var(--text);
+}
+
+.settings-tab.selected {
+    color: var(--accent);
+    background: var(--nav-hover);
+    border-color: var(--nav-border);
+}
+
+/* Вкладка с редактором расписания не влезает в узкое окно */
+.settings-box-wide {
+    width: 97%;
+    max-width: 1280px;
+}
+
+/* Чтобы 15 строк пар помещались без прокрутки, у высокой вкладки
+   вертикальные отступы скромнее */
+.settings-box-wide .settings-body {
+    gap: 16px;
+}
+
+.settings-box-wide .settings-section + .settings-section {
+    margin-top: 16px;
+}
+
+.settings-pane.hidden {
+    display: none;
+}
+
+/* Предупреждение под содержимым окна настроек: показывается в любой
+   вкладке, пока есть что выгружать */
+.settings-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    max-width: 100%;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text);
+    background: var(--w1-bg);
+    border: 1px solid var(--w1-border);
+    border-radius: 10px;
+}
+
+.settings-notice.hidden {
+    display: none;
+}
+
+.settings-notice::before {
+    content: "!";
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--w1-text);
+    background: var(--w1-border);
+    border-radius: 50%;
+}
+
+.settings-notice b {
+    font-weight: 600;
+}
+
+/* ——————————————————————————————————
+   ВКЛАДКА «ДНЕВНИК»: ручное расписание
+   —————————————————————————————————— */
+
+.ed-sub {
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.ed-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Ряд кнопок под рамкой пар: отступ, чтобы не прилипали, и правый блок */
+.ed-actions.ed-under {
+    margin-top: 14px;
+    align-items: center;
+}
+
+.ed-actions-end {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.ed-save {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Кнопки вкладки повторяют вид кнопок дневника, но компактнее */
+.ed-actions .week-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 16px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 18px;
+    cursor: pointer;
+}
+
+.ed-actions .week-btn:hover {
+    background: var(--nav-hover);
+    color: var(--accent);
+}
+
+.ed-actions .week-btn.io {
+    color: var(--accent);
+}
+
+.ed-actions .week-btn.ed-drop {
+    color: var(--text-muted);
+}
+
+/* Вкладки периодов: ручная правка действует только до первого снимка с сайта */
+.ed-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.ed-tab {
+    display: inline-flex;
+    align-items: center;
+    height: 32px;
+    padding: 0 14px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+.ed-tab:hover {
+    color: var(--accent);
+}
+
+.ed-tab.selected {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Форма нового периода: две даты рядом и кнопки справа */
+.ed-period-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--nav-hover);
+    border: 1px solid var(--nav-border);
+    border-radius: 12px;
+}
+
+.ed-period-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.ed-period-field input {
+    height: 36px;
+    padding: 0 10px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 8px;
+}
+
+.ed-period-actions {
+    align-items: center;
+    margin-left: auto;
+}
+
+/* Ошибка периода: границы неверные или период залезает на снимок с сайта */
+.ed-error {
+    margin-top: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--nav-hover);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+}
+
+.ed-actions .week-btn.ed-drop:hover {
+    color: var(--text);
+}
+
+/* Пометка о том, что правки живут только в браузере, и дата выгрузки */
+.ed-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+    background: var(--nav-hover);
+    border: 1px solid var(--nav-border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+}
+
+.ed-note b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.ed-note-date {
+    white-space: nowrap;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.ed-legend {
+    margin-bottom: 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+/* Список пар — в рамке, шапка остаётся на виду при прокрутке */
+.ed-list {
+    padding: 12px 14px 4px;
+    background: var(--nav-hover);
+    border: 1px solid var(--nav-border);
+    border-radius: 12px;
+}
+
+.ed-count {
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 999px;
+}
+
+/* Шапка и строки редактора: колонки на долях, чтобы окно не приходилось
+   прокручивать по горизонтали — поля просто сжимаются вместе с окном */
+.ed-head,
+.ed-row {
+    display: grid;
+    grid-template-columns:
+        minmax(110px, 0.85fr)
+        minmax(140px, 1fr)
+        96px
+        minmax(150px, 1.05fr)
+        minmax(170px, 1.5fr)
+        minmax(140px, 1fr)
+        34px;
+    gap: 8px;
+    align-items: center;
+}
+
+.ed-head {
+    padding-bottom: 10px;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--nav-border);
+}
+
+/* Показываем 15 строк, дальше список прокручивается:
+   строка 36px + 8px промежутка = 44px, 15 * 44 = 660px */
+.ed-rows {
+    max-height: 660px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--nav-border) transparent;
+}
+
+.ed-rows::-webkit-scrollbar {
+    width: 10px;
+}
+
+.ed-rows::-webkit-scrollbar-thumb {
+    background: var(--nav-border);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+}
+
+.ed-row {
+    min-height: 36px;
+    margin-bottom: 8px;
+}
+
+.ed-row input[type="text"],
+.ed-row select {
+    width: 100%;
+    padding: 8px 10px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--container-bg);
+    border: 1px solid var(--nav-border);
+    border-radius: 8px;
+}
+
+.ed-row input[type="text"]:focus,
+.ed-row select:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
+/* Ползунок «пара одна и та же обе недели» */
+.ed-both {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.ed-both input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ed-slider {
+    position: relative;
+    display: block;
+    width: 44px;
+    height: 24px;
+    background: var(--nav-border);
+    border-radius: 999px;
+    transition: background 0.15s ease;
+}
+
+.ed-slider::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    background: var(--container-bg);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.15s ease;
+}
+
+.ed-both input:checked + .ed-slider {
+    background: var(--accent);
+}
+
+.ed-both input:checked + .ed-slider::after {
+    transform: translateX(20px);
+}
+
+.ed-both input:focus-visible + .ed-slider {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Числитель / знаменатель */
+.ed-weeks {
+    display: flex;
+    gap: 6px;
+}
+
+/* Числитель / знаменатель: выбранный вариант обводится рамкой целиком,
+   а не заливается цветом — иначе знаменатель не отличить */
+.ed-week {
+    flex: 1;
+    padding: 7px 6px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border: 2px solid var(--nav-border);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.ed-week:hover {
+    color: var(--accent);
+}
+
+.ed-week.selected {
+    color: var(--accent);
+    font-weight: 700;
+    border-color: var(--accent);
+}
+
+.ed-weeks-off {
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.ed-del {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-muted);
+    background: var(--nav-hover);
+    border: 1px solid var(--nav-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.ed-del:hover {
+    color: var(--text);
 }
 
 /* Выпадающие списки отделения и группы */
@@ -1689,6 +2539,39 @@ body {
     cursor: pointer;
 }
 
+/* На планшете и телефоне редактор пар складываем в две колонки —
+   иначе окно пришлось бы прокручивать по горизонтали */
+@media (max-width: 1024px) {
+    .ed-list {
+        padding: 10px 10px 2px;
+    }
+    .ed-head {
+        display: none;
+    }
+    .ed-rows {
+        max-height: 55vh;
+    }
+    .ed-row {
+        grid-template-columns: 1fr 1fr;
+        row-gap: 6px;
+        min-height: 0;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--nav-border);
+    }
+    .ed-row .ed-subj,
+    .ed-row .ed-teacher {
+        grid-column: 1 / -1;
+    }
+    .ed-row .ed-both,
+    .ed-row .ed-weeks {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+    .ed-row .ed-del {
+        justify-self: end;
+    }
+}
+
 @media (max-width: 700px) {
     .settings-btn {
         top: 10px;
@@ -1702,4 +2585,497 @@ body {
 /* Утилита скрытия */
 .hidden {
     display: none !important;
+}
+
+/* ————————————————————————————————————————————————————————————————
+   ПОДГОНКА РАЗМЕРОВ ДЛЯ НОУТБУЧНЫХ ЭКРАНОВ
+
+   Всё уменьшение собрано здесь, в одном месте, и работает только при высоте
+   окна до 880 пикселей. На большом экране эти правила не срабатывают вовсе,
+   поэтому исходные размеры выше по файлу остаются нетронутыми.
+
+   Чтобы поправить размер, достаточно поменять одно число в переменной ниже —
+   искать правило по файлу не нужно.
+   ———————————————————————————————————————————————————————————————— */
+@media (max-height: 880px) {
+    :root {
+        /* Заголовки и «пилюли» с информацией. Размеры взяты у счётчиков «н» и «б»
+           (.stat-chip: высота 34, шрифт 14, отступы 0 12 0 8) — они остались
+           исходными и выглядят правильно, поэтому пилюли ровняем по ним */
+        --lap-title: clamp(12px, 1.6vh, 24px);
+        --lap-nav: clamp(12px, 1.3vh, 16px);
+        --lap-pill-text: 14px;
+        --lap-pill-height: 34px;
+        --lap-pill-pad: 0 12px 0 8px;
+        --lap-gap: min(0.7vh, 9px);
+
+        /* Расписание */
+        --lap-head: clamp(11px, 1.3vh, 15px);
+        --lap-card-pad: min(0.45vh, 10px) 6px;
+        --lap-subj-card: clamp(11px, 1.4vh, 14px);
+        --lap-teacher-card: clamp(8px, 1.1vh, 11px);
+
+        /* Дневник: неделя */
+        --lap-subj-week: clamp(9px, 1.2vh, 13px);
+        --lap-teacher-week: clamp(8px, 1.05vh, 11px);
+        --lap-subj-min: min(1.6vh, 32px);
+        --lap-teacher-min: min(0.9vh, 13px);
+        --lap-teacher-margin: min(0.2vh, 3px) 0 min(0.4vh, 6px);
+        --lap-mark: clamp(13px, 2vh, 22px);
+        --lap-mark-text: clamp(8px, 1vh, 12px);
+        --lap-date: clamp(8px, 1vh, 11px);
+        --lap-pair-label: clamp(8px, 1vh, 11px);
+        --lap-day-name: clamp(9px, 1.15vh, 13px);
+        --lap-week-date: clamp(9px, 1.15vh, 12px);
+
+        /* Дневник: месяц и год */
+        --lap-ms-table: clamp(10px, 1.25vh, 13px);
+        --lap-subj-ms: clamp(9px, 1.2vh, 13px);
+        --lap-teacher-ms: clamp(8px, 1.05vh, 11px);
+        --lap-ms-head-pad: min(0.4vh, 5px) 3px;
+        --lap-ms-date: clamp(7px, 0.9vh, 10px);
+        --lap-sem: clamp(12px, 1.5vh, 15px);
+    }
+
+    /* Заголовки, навигация и «пилюли» */
+    .nav-menu {
+        margin-bottom: 0;
+    }
+
+    .nav-link {
+        padding: min(0.1vh, 3px) 8px;
+        font-size: var(--lap-nav);
+    }
+
+    .page-title {
+        
+        font-size: var(--lap-title);
+    }
+
+    .view-mode,
+    .diary-meta .week-btn {
+        height: var(--lap-pill-height);
+    }
+
+    /* «Пилюли» с информацией. Кроме дневника есть и на странице расписания —
+       дата и чётность живут в .schedule-meta, их я в первый раз пропустил,
+       поэтому они и остались крупными */
+    .view-mode .mode-btn,
+    .diary-meta .week-btn,
+    .diary-meta input,
+    .diary-meta button,
+    #diary-meta input,
+    #diary-meta button,
+    .content-about input[type="date"],
+    .meta-stats,
+    .parity-chip,
+    .diary-week-title,
+    .diary-week-range,
+    .schedule-meta span {
+        padding: var(--lap-pill-pad);
+        font-size: var(--lap-pill-text);
+    }
+
+    /* Пустое место над заголовком и под ним — меньше */
+    .content-about {
+        padding-top: min(0.5vh, 6px);
+        padding-bottom: min(0.5vh, 6px);
+    }
+
+    /* «Пилюли» расписания делаем такими же по высоте, как в дневнике: там их
+       высоту задают кнопки, а тут она росла от строки. Кружок легенды не трогаем
+       — у него своя форма */
+    .schedule-meta span:not(.legend-chip) {
+        display: inline-flex;
+        align-items: center;
+        height: var(--lap-pill-height);
+        line-height: 1;
+    }
+
+    .diary-meta {
+        gap: var(--lap-gap);
+        margin-bottom: min(0.1vh, 4px);
+    }
+
+    /* Расписание. Селектор у предмета и преподавателя длиннее всех в проекте:
+       с коротким их перебивали другие правила, и размеры не менялись */
+    .day-card-head {
+        padding: min(0.5vh, 10px) 8px;
+        font-size: var(--lap-head);
+    }
+
+    .day-card .wcell,
+    .diary-table th,
+    .diary-table td,
+    .d-cell {
+        padding: var(--lap-card-pad);
+    }
+
+    .day-card .day-row .wcell .subj {
+        font-size: var(--lap-subj-card);
+    }
+
+    .day-card .day-row .wcell .teacher {
+        font-size: var(--lap-teacher-card);
+    }
+
+    .pair-time {
+        font-size: var(--lap-pair-time);
+    }
+
+    /* Дневник, неделя */
+    .diary-table .d-subj {
+        min-height: var(--lap-subj-min);
+        font-size: var(--lap-subj-week);
+        line-height: 1.05;
+    }
+
+    .diary-table .d-teacher {
+        min-height: var(--lap-teacher-min);
+        margin: var(--lap-teacher-margin);
+        font-size: var(--lap-teacher-week);
+    }
+
+    .diary-table .d-mark {
+        width: var(--lap-mark);
+        height: var(--lap-mark);
+        font-size: var(--lap-mark-text);
+    }
+
+    .diary-table .day-th .day-name
+
+    .diary-table .day-th .day-date
+
+    /* Дневник, месяц и год */
+    #diary-month-table,
+    #diary-year-table {
+        font-size: var(--lap-ms-table);
+    }
+
+    #diary-month-table .d-subj,
+    #diary-year-table .d-subj {
+        min-height: min(1.6vh, 32px);
+        font-size: var(--lap-subj-ms);
+    }
+
+    #diary-month-table .d-teacher,
+    #diary-year-table .d-teacher {
+        font-size: var(--lap-teacher-ms);
+    }
+
+    #diary-month-table .d-mark,
+    #diary-year-table .d-mark {
+        width: var(--lap-mark);
+        height: var(--lap-mark);
+        font-size: var(--lap-mark-text);
+    }
+
+    .ms-table .ms-day-th {
+        padding: var(--lap-ms-head-pad);
+        font-size: var(--lap-date);
+    }
+
+    /* Шапка месяца: числа и дни недели внутри ячеек заданы отдельными элементами,
+       поэтому правило для самой ячейки их не уменьшало */
+    .ms-table .ms-day-th *,
+    .ms-table .ms-num-th,
+    .ms-table .ms-subj-th {
+        padding: min(0.3vh, 4px) 2px;
+        font-size: var(--lap-ms-date);
+        line-height: 1.1;
+    }
+
+    /* Год: подпись семестра и шапка столбцов — уменьшаем только отступы,
+       размер шрифта не трогаем */
+    .sem-nav {
+        padding: min(0.35vh, 5px) 8px;
+    }
+
+    .sem-nav .sem-btn
+
+    #diary-year-table th,
+    .ms-table .ys-grades-th,
+    .ms-table .ys-stat-th {
+        padding: min(0.3vh, 4px) 3px;
+    }
+
+    /* Шапка недели: день недели и число — чуть крупнее, отступы — меньше.
+       Переменные свои, чтобы не задеть шапку месяца: там числа наоборот мельче */
+    .diary-table .day-th {
+        padding: min(0.3vh, 4px) 2px;
+    }
+
+    .diary-table .day-th .day-name {
+        font-size: var(--lap-day-name);
+        
+    }
+
+    .diary-table .day-th .day-date
+
+    /* Надпись «Пара / время» в шапке столбца — меньше. Номер пары и время в
+       клетках не трогаем: они и так мелкие, мои прежние правила их только
+       портили, поэтому убраны */
+    .diary-table thead .pair-th {
+        padding: min(0.3vh, 5px) 2px !important;
+        font-size: var(--lap-pair-label) !important;
+        line-height: 1.1 !important;
+    }
+
+    /* Время пары возвращаем к прежнему размеру: раньше его ужимало моё правило,
+       и оно вышло слишком мелким. Приоритет перебивает то правило */
+    .diary-table .pair-time {
+        font-size: var(--lap-pair-time) !important;
+        line-height: 1.05 !important;
+    }
+
+    /* Номер пары — среднее между двумя прежними значениями */
+    .diary-table .pair-num {
+        font-size: var(--lap-pair-num) !important;
+        line-height: 1.05 !important;
+    }
+
+    /* Отступы внутри всей шапки таблиц — меньше */
+    .diary-table thead th {
+        padding: min(0.15vh, 3px) 2px !important;
+    }
+
+    /* Год: у семестра отступы меньше, приоритет принудительный — в прошлый раз
+       правка не применилась */
+    .sem-nav {
+        padding: min(0.15vh, 3px) 6px !important;
+    }
+
+    .sem-nav .sem-btn {
+        padding: min(0.1vh, 2px) 4px !important;
+    }
+
+    /* Уточнение переменных: правка внутри основного блока не применилась, поэтому
+       задаём здесь заново — тут они идут последними и потому имеют силу.
+       Время и номер пары обязательно должны быть определены: их правила ссылаются
+       на эти переменные */
+    :root {
+        --lap-title: clamp(16px, 2vh, 26px);
+        --lap-subj-week: clamp(11px, 1.4vh, 14px);
+        --lap-teacher-week: clamp(9px, 1.2vh, 12px);
+        --lap-ms-table: clamp(11px, 1.35vh, 14px);
+        --lap-subj-ms: clamp(11px, 1.35vh, 14px);
+        --lap-teacher-ms: clamp(9px, 1.15vh, 12px);
+        --lap-ms-date: 12px;
+        --lap-ms-head-pad: min(0.25vh, 3px) 2px;
+        --lap-sem: clamp(13px, 1.6vh, 16px);
+        --lap-pair-time: clamp(7px, 0.9vh, 11px);
+        --lap-pair-num: clamp(9px, 1.1vh, 13px);
+        --lap-pair-label: clamp(10px, 1.25vh, 13px);
+    }
+
+    /* Номер и время пары — крупнее */
+    .diary-table .pair-num {
+        font-size: clamp(11px, 1.35vh, 16px) !important;
+    }
+
+    .diary-table .pair-time {
+        font-size: clamp(9px, 1.1vh, 13px) !important;
+    }
+
+    /* День недели и число — друг под другом и по центру, без разрыва между ними.
+       Раньше их разносило отступом, поэтому смотрим и на имя, и на дату */
+    .diary-table .day-th .day-name,
+    .diary-table .day-th .day-date {
+        display: block !important;
+        font-size: clamp(11px, 1.35vh, 14px) !important;
+        line-height: 1.15 !important;
+        text-align: center !important;
+    }
+
+    .diary-table .day-th .day-name {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .diary-table .day-th .day-date {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    /* Год: сжимаем саму клетку с семестром, а не текст в ней */
+    .sem-nav {
+        height: auto !important;
+        min-height: 0 !important;
+        padding: min(0.1vh, 2px) 6px !important;
+        line-height: 1 !important;
+    }
+
+    .sem-nav .sem-label {
+        font-size: var(--lap-sem) !important;
+        line-height: 1.1 !important;
+    }
+
+    /* Пилюля с календарём: сейчас она сжата вокруг текста, возвращаем ей поля */
+    .diary-meta input[type="date"],
+    .content-about input[type="date"] {
+        height: var(--lap-pill-height) !important;
+        padding: 0 12px !important;
+        border-radius: 17px !important;
+    }
+
+    /* Заголовок: центрируем сам блок строки, а не только текст. Иначе он кажется
+       ниже центра из-за пустого места в строке. Отступы сверху и снизу — равные */
+    .page-title {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 32px !important;
+        margin: min(0.8vh, 8px) 0 !important;
+        line-height: 1.1 !important;
+    }
+
+    /* Отступ слева от содержимого — меньше */
+    .content-about {
+        padding-left: min(0.6vh, 6px) !important;
+        padding-right: min(0.6vh, 6px) !important;
+    }
+
+    .diary-table thead th,
+    .diary-table thead td,
+    .ms-table thead th,
+    .ms-table thead td {
+        vertical-align: middle !important;
+    }
+
+    .diary-table .day-th .day-name,
+    .diary-table .day-th .day-date {
+        line-height: 1.25 !important;
+    }
+
+    /* Расписание: отступы внутри клеток — сильно меньше, чтобы карточки стали
+       короче и названия пар помещались лучше */
+    .day-card .wcell,
+    .day-card .day-row .wcell {
+        padding: min(0.2vh, 2px) 4px !important;
+    }
+
+    .day-card .subj {
+        line-height: 1.12 !important;
+    }
+
+    .day-card .teacher {
+        line-height: 1.05 !important;
+    }
+
+    .page-title {
+        margin: min(0.6vh, 6px) 0 min(0.15vh, 2px) 0 !important;
+        padding-top: 0 !important;
+    }
+
+    .sem-nav #sem-label {
+        font-size: var(--lap-sem);
+    }
+
+    /* Столбец «Пара / время» в неделе: и номер пары, и время, и отступы. Селектор
+       идёт через pair-th, чтобы перебить исходные правила для ячеек таблицы */
+    .diary-table .pair-th {
+        padding: min(0.3vh, 5px) 2px;
+    }
+
+    .diary-table .pair-th .pair-num {
+        font-size: var(--lap-pair-num);
+        line-height: 1.05;
+    }
+
+    .diary-table .pair-th .pair-time {
+        font-size: var(--lap-pair-time);
+        line-height: 1.05;
+    }
+}
+
+/* Счётчик замен пустой — значит, замен нет, и рамка от него не нужна: раньше
+   оставался пустой овал с рамкой высотой 42 пикселя. Стоит вне условия по высоте
+   окна, поэтому действует на всех экранах */
+#replacements-meta:empty {
+    display: none;
+}
+
+/* Полоса прокрутки — та же, что в окошке расширения: тонкая, с прозрачной
+   дорожкой и скруглённым бегунком цвета акцента. Стоит вне условия по высоте
+   окна, поэтому действует на всех экранах */
+.content-about {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-border) transparent;
+}
+
+.content-about::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-about::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content-about::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: var(--accent-border);
+}
+
+.content-about::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* Панель сайта — на всю высоту окна: при прокрутке под ней не должно оставаться
+   полосы, где фон пользователя виден без приглушения */
+.container {
+    height: 100%;
+}
+
+.content-about {
+    flex: 1 1 auto;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Заголовок страницы: от навигации — большой отступ, до пилюль — маленький.
+   Соседям обнуляем собственные отступы, иначе они перебивают заголовок, и он
+   не двигается, сколько бы я ему ни задавал */
+.nav-menu {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.schedule-meta {
+    margin-top: 0 !important;
+}
+
+.page-title {
+    margin: min(2.4vh, 22px) 0 min(0.3vh, 3px) 0 !important;
+}
+
+/* Подложка страницы. Раньше её рисовал псевдоэлемент с inset: 0, но он лежит
+   внутри прокручиваемой панели, поэтому его высота равна видимой части окна —
+   ниже него фон шёл без приглушения, и при прокрутке появлялась полоса.
+   Теперь краска на самой панели, а background-attachment: local растягивает её
+   на всю прокручиваемую область. Прозрачность учитываем прямо в цвете, чтобы
+   opacity не погасила содержимое панели */
+.content-about {
+    background: color-mix(in srgb, var(--panel-bg) calc(var(--panel-alpha, 1) * 100%), transparent);
+    background-attachment: local;
+}
+
+.content-about::before {
+    display: none;
+}
+
+/* Окно загрузки. Скрипт кладёт в сетку единственного ребёнка — блок
+   .no-replacements с классами nr-title и nr-sub. Это не карточка дня, поэтому все
+   прежние попытки через .day-card не срабатывали. Сетка ставила его в первую
+   колонку — отсюда вид, прижатый к левому краю. Просим занять всю ширину и
+   встать по центру, ширину при этом берёт по содержимому */
+.days-grid > .no-replacements,
+.days-grid > *:only-child {
+    grid-column: 1 / -1 !important;
+    justify-self: center !important;
+}
+
+.no-replacements {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
 }

@@ -6,7 +6,14 @@
     <title>Замены</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="icon" type="image/png" href="favicon.png">
-    <script src="js/theme.js"></script>
+    <!-- mpt-parse.js — разбор страниц, общий с Node-загрузчиками;
+         live.js — подставляет прошлую загрузку и обновляет данные с mpt.ru -->
+    <script defer src="js/mpt-parse.js"></script>
+    <script defer src="data/schedule.js"></script>
+    <script defer src="data/replacements.js"></script>
+    <script defer src="js/live.js"></script>
+    <script defer src="js/data.js"></script>
+    <script defer src="js/theme.js"></script>
 </head>
 <body>
     <div class="container">
@@ -27,36 +34,24 @@
 
         <!-- Содержимое -->
         <div class="content-about">
-            <div class="page-title">Замены</div>
+            <div class="page-title" id="class-title"></div>
 
             <div class="schedule-meta">
-                <span class="meta-date meta-date-white" id="replacements-date">—</span>
+                <span class="meta-date" id="replacements-meta">—</span>
             </div>
 
-            <!-- Реальные данные с mpt.ru/izmeneniya-v-raspisanii/: группы П-5-25 нет — замен нет -->
-            <div class="no-replacements">
+            <!-- Замены выбранной группы (заполняются скриптом) -->
+            <div class="rep-list" id="replacements-list"></div>
+
+            <div class="no-replacements hidden" id="replacements-empty">
                 <div class="nr-title">Замен нет</div>
-                <div class="nr-sub">Для группы П-5-25 на эту дату замены не найдены</div>
+                <div class="nr-sub" id="replacements-empty-sub"></div>
             </div>
+
+            <div class="schedule-caption" id="replacements-updated">—</div>
         </div>
     </div>
 
-    <script>
-        (function () {
-            function fmtDate(d) {
-                var months = [
-                    "января", "февраля", "марта", "апреля", "мая", "июня",
-                    "июля", "августа", "сентября", "октября", "ноября", "декабря"
-                ];
-                var weekdays = [
-                    "Воскресенье", "Понедельник", "Вторник", "Среда",
-                    "Четверг", "Пятница", "Суббота"
-                ];
-                return weekdays[d.getDay()] + ", " + d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
-            }
-            var el = document.getElementById("replacements-date");
-            if (el) el.textContent = fmtDate(new Date());
-        })();
-    </script>
+    <script defer src="js/replacements.js"></script>
 </body>
 </html>
