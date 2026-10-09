@@ -22,7 +22,8 @@ const CHECKS = [
     "check-diary-teachers.cjs",
     "check-diary-history.cjs",
     "check-diary-settings.cjs",
-    "check-replacements.cjs"
+    "check-replacements.cjs",
+    "check-popup.cjs"
 ];
 
 let ok = 0;

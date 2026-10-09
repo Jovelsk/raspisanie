@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "МПТ: расписание и дневник",
+  "short_name": "МПТ",
+  "description": "Расписание, замены и дневник Московского приборостроительного техникума. Данные берутся с mpt.ru и хранятся только у вас.",
+  "version": "1.0.0",
+  "action": {
+    "default_title": "МПТ: расписание и дневник",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "favicon.png"
+    }
+  },
+  "icons": {
+    "128": "favicon.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://mpt.ru/*"
+  ]
+}

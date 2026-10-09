@@ -51,6 +51,12 @@ t("несуществующее отделение -> null", () =>
     assert.strictEqual(D.findDepartment("99.99.99 ХЗ"), null));
 
 console.log("\n== Группа выбрана с сайта, структура расписания цела ==");
+t("ключи хранилища отданы наружу и верны", () => {
+    // По ним выбор группы читает окошко расширения. Если объявить их выше
+    // присваивания, наружу уйдёт undefined, и записи уедут в никуда.
+    assert.strictEqual(D.OTDEL_KEY, "mpt-otdel");
+    assert.strictEqual(D.GRUPA_KEY, "mpt-grupa");
+});
 t("выбрана с сайта (название с лишним пробелом тоже находится)", () => {
     assert.strictEqual(D.selectGroup("09.02.07 П, Т", "П-5-25"), true);
     assert.strictEqual(D.origin, "mpt");

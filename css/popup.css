@@ -1,0 +1,456 @@
+/* Окошко расширения — маленькая страница. Поверх общих стилей сайта
+   (css/main.css) здесь только то, что нужно окошку: размеры окна, компактная
+   карточка дня, отметки, замены и настройки во всю ширину.
+   Цвета и переменные берём из общих стилей, чтобы вид совпадал с сайтом. */
+
+body {
+    width: 380px;
+    height: auto;
+    min-height: 160px;
+    /* Выше браузер всплывающее окно всё равно не покажет */
+    max-height: 588px;
+    overflow: hidden;
+    display: block;
+}
+
+/* Прокрутка — внутри этого блока, полоса своя, поаккуратнее браузерной.
+   Первые два свойства для Firefox, дальше — для Chrome, Edge и прочих */
+.content-about {
+    max-height: 588px;
+    overflow-y: auto;
+    padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-border) transparent;
+}
+
+.content-about::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-about::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content-about::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: var(--accent-border);
+}
+
+.content-about::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
+
+/* ——————————————————————————————————
+   ШАПКА И СТРОКА ДНЯ
+   —————————————————————————————————— */
+
+.popup {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 14px 16px 14px;
+    border-radius: 14px;
+}
+
+/* Справа оставляем место шестерёнке настроек */
+.popup-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding-right: 44px;
+}
+
+.popup-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+/* Перемотка дня: обе стрелки слева, дата после них. Ходить можно только на
+   вчера и завтра — на краю стрелка замолкает */
+.popup-days {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.popup-days .popup-sub {
+    flex: 0 1 auto;
+    margin-left: 8px;
+    text-align: left;
+}
+
+.popup-sub {
+    font-size: 12px;
+    opacity: .75;
+}
+
+.popup-arrow {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.popup-arrow:hover:not(:disabled) {
+    background: var(--accent-light);
+}
+
+.popup-arrow:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+.popup-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.popup-open {
+    flex: 1;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.popup-refresh {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.popup-refresh:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+.popup-foot {
+    font-size: 11px;
+    opacity: .6;
+}
+
+/* ——————————————————————————————————
+   КАРТОЧКА ДНЯ
+   Её рисует js/schedule.js — тот же код, что и на сайте. Здесь карточка только
+   растягивается на всю ширину окошка и поджимается: места мало, а вместить надо
+   весь день одним взглядом
+   —————————————————————————————————— */
+
+.popup-day {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popup-day-grid {
+    display: block;
+}
+
+.popup-day-grid .day-card {
+    width: 100%;
+    min-width: 0;
+    font-size: 13px;
+}
+
+.popup-day-grid .day-card-head {
+    padding-block: 7px;
+    font-size: 14px;
+}
+
+.popup-day-grid .day-row {
+    padding-block: 3px;
+}
+
+.popup-day-grid .wcell {
+    padding-block: 4px;
+}
+
+.popup-day-grid .subj {
+    font-size: 13px;
+    line-height: 1.25;
+}
+
+.popup-day-grid .teacher {
+    font-size: 11px;
+}
+
+.popup-day-grid .pair-time {
+    font-size: 10px;
+}
+
+/* Запасной путь: если общая отрисовка недоступна, показываем простой список */
+.popup-pair {
+    display: flex;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--accent-light);
+    background: var(--container-bg);
+}
+
+.popup-pair-num {
+    flex: none;
+    width: 18px;
+    font-weight: 600;
+    opacity: .65;
+}
+
+.popup-pair-body {
+    min-width: 0;
+}
+
+.popup-pair-subj {
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.popup-pair-teacher {
+    margin-top: 2px;
+    font-size: 11px;
+    opacity: .7;
+}
+
+.popup-empty,
+.popup-loading {
+    padding: 10px 2px;
+    font-size: 13px;
+    opacity: .75;
+}
+
+/* ——————————————————————————————————
+   ОТМЕТКИ
+   Цвета приходят из классов сайта d-mark g5…gb, поэтому здесь только размеры:
+   значения, плюсик и крестик — одинаковые квадраты 24 на 24
+   —————————————————————————————————— */
+
+.mk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.mk-chip.d-mark,
+.mk-plus.d-mark,
+.mk-pick .mk-btn.d-mark,
+.mk-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    min-width: 0;
+    padding: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1;
+}
+
+/* Знаки «+» и «×» в шрифте нарисованы чуть ниже середины строки, поэтому внутри
+   квадрата кажутся смещёнными вниз. Уменьшаем высоту содержимого снизу — при
+   центрировании знак поднимается. Цифрам это не нужно: у них метрики ровные */
+.mk-plus.d-mark,
+.mk-close {
+    padding-bottom: 2px;
+}
+
+.mk-close {
+    border: 1px solid var(--accent-border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+/* Выбор отметки: своя строка под значками, раскрывается плюсиком или нажатием
+   на саму оценку. Открыт только один за раз */
+.mk-pick {
+    display: none;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px;
+    margin-top: 3px;
+}
+
+.mk.mk-open .mk-pick {
+    display: flex;
+}
+
+.mk-pick .mk-btn.d-mark {
+    opacity: .5;
+    cursor: pointer;
+}
+
+.mk-pick .mk-btn.mk-on {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* ——————————————————————————————————
+   ЗАМЕНЫ
+   Сами строки оформлены общими стилями сайта (rep-*), здесь только заголовок
+   —————————————————————————————————— */
+
+.popup-rep {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popup-rep-head {
+    margin: 2px 0 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: .8;
+}
+
+.popup-rep .rep-row {
+    padding-block: 5px;
+}
+
+.popup-rep .rep-from,
+.popup-rep .rep-to {
+    font-size: 12px;
+}
+
+/* ——————————————————————————————————
+   НАСТРОЙКИ
+   Их строит js/theme.js — то же окно, что и на сайте. В окошке оно не окно
+   поверх окна, а второй экран: пока настройки открыты, день скрыт, рамок и тени
+   нет, и лежат они на той же подложке. Поэтому ползунок прозрачности влияет и
+   на них тоже
+   —————————————————————————————————— */
+
+body:has(.settings-overlay:not(.hidden)) .popup {
+    display: none;
+}
+
+/* Пока настройки открыты, шестерёнка не нужна: закрывает крестик в углу */
+body:has(.settings-overlay:not(.hidden)) .settings-btn {
+    display: none;
+}
+
+.settings-overlay {
+    position: static;
+    inset: auto;
+    background: none;
+    padding: 0;
+}
+
+.settings-window {
+    position: static;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: auto;
+    margin: 0;
+    /* На сайте окно настроек стоит по центру через transform — здесь он не нужен */
+    transform: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+}
+
+/* Внутренняя коробка на сайте непрозрачная и с рамкой — из-за неё настройки и
+   не были прозрачными, как день */
+.settings-overlay .settings-box,
+.settings-overlay .settings-body,
+.settings-overlay .settings-pane {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.settings-overlay .settings-box {
+    border-radius: 0;
+}
+
+/* Поджимаем настройки: высота всплывающего окна ограничена браузером */
+.settings-overlay .settings-head {
+    padding: 8px 10px 4px 10px;
+}
+
+.settings-overlay .settings-title {
+    font-size: 15px;
+}
+
+.settings-overlay .settings-tabs {
+    /* Снизу оставляем воздух, чтобы вкладка не прилипала к разделительной линии.
+       Отступ и внутри строки вкладок, и после неё: линия может принадлежать как
+       самим вкладкам, так и телу настроек ниже */
+    padding: 0 10px 8px 10px;
+    margin-bottom: 8px;
+}
+
+.settings-overlay .settings-tab {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.settings-overlay .settings-body {
+    padding: 6px 10px 10px 10px;
+}
+
+.settings-overlay .settings-section {
+    margin: 0 0 8px 0;
+    gap: 4px;
+}
+
+.settings-overlay .settings-section-title {
+    font-size: 12px;
+}
+
+.settings-overlay .settings-select,
+.settings-overlay .settings-input {
+    padding: 6px 8px;
+    font-size: 13px;
+}
+
+.settings-overlay .settings-hint {
+    margin-top: 3px;
+    font-size: 11px;
+}
+
+.settings-overlay .theme-opt {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+.settings-overlay .color-opt,
+.settings-overlay .color-custom {
+    width: 22px;
+    height: 22px;
+}
+
+.settings-overlay .bg-alpha-row {
+    margin-top: 6px;
+}
+
+.settings-overlay .bg-alpha-value {
+    font-size: 11px;
+}

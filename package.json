@@ -19,6 +19,7 @@
     "check-diary-history": "node tools/check-diary-history.cjs",
     "check-diary-settings": "node tools/check-diary-settings.cjs",
     "check-replacements": "node tools/check-replacements.cjs",
+    "check-popup": "node tools/check-popup.cjs",
     "fetch-replacements": "node tools/fetch-replacements.mjs"
   },
   "devDependencies": {

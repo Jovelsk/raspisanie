@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<title>МПТ</title>
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/popup.css">
+</head>
+<body>
+<div class="content-about">
+    <div class="popup">
+        <div class="popup-head">
+            <div class="popup-title" id="popup-title">МПТ</div>
+        </div>
+        <div class="popup-days">
+            <button type="button" class="popup-arrow" id="popup-prev" title="Вчера">←</button>
+            <button type="button" class="popup-arrow" id="popup-next" title="Завтра">→</button>
+            <div class="popup-sub" id="popup-sub"></div>
+        </div>
+        <div class="popup-day" id="popup-list"></div>
+        <div class="popup-rep" id="popup-replacements"></div>
+        <div class="popup-actions">
+            <button type="button" class="popup-open" id="popup-open">Открыть сайт</button>
+            <button type="button" class="popup-refresh" id="popup-refresh">Обновить</button>
+        </div>
+        <div class="popup-foot" id="popup-foot">Отметки и настройки — на сайте</div>
+    </div>
+</div>
+<!-- Служебный маркер: по нему js/live.js понимает, что на этой странице нужны
+     замены, и держит их свежими (раз в полчаса). Сам он пустой и невидимый;
+     страницу замен в окошке не подключаем, рисуем замены сами. -->
+<div id="replacements-list" hidden></div>
+<script src="js/mpt-parse.js"></script>
+<script src="js/live.js"></script>
+<script src="js/data.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/diary.js"></script>
+<script src="js/diary-settings.js"></script>
+<script src="js/popup.js"></script>
+</body>
+</html>
